@@ -48,17 +48,18 @@ Complete the desktop ecosystem.
 
 # Phase 3 — Design System
 
-Transform configuration into a reusable design framework.
+Transform Obsyx from a single desktop into a themable desktop framework.
 
 - [ ] Theme registry
+- [ ] Theme API
+- [ ] Noctis Amethyst (reference implementation)
+- [ ] Additional official themes
 - [ ] Shared color tokens
 - [ ] Shared spacing system
 - [ ] Typography scale
 - [ ] Glass material system
 - [ ] Motion system
 - [ ] Component library
-
----
 
 # Phase 4 — Developer Experience
 

@@ -16,7 +16,9 @@ local Applications = {
     { "B",      Registry.Apps.browser       },
     { "E",      Registry.Apps.fileManager   },
     { "L",      Registry.Desktop.lock       },
-
+    { "C",      Registry.Apps.editor        },
+    { "M",      Registry.Apps.musicPlayer   },
+   
 }
 
 --------------------------------------------------------------------------------

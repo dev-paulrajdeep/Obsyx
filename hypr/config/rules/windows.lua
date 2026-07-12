@@ -57,11 +57,11 @@ hl.window_rule({
 
 local FloatingUtilities = {
 
-    "^blueman%-manager$",
-    "^nm%-connection%-editor$",
+    "^blueman-manager$",
+    "^nm-connection-editor$",
     "^pavucontrol$",
-    "^qalculate%-gtk$",
-    "^org%.gnome%.Calculator$",
+    "^qalculate-gtk$",
+    "^org.gnome.Calculator$",
 
 }
 
@@ -172,7 +172,7 @@ hl.window_rule({
 
 local HyprUtilities = {
 
-    "^hyprland%-run$",
+    "^hyprland-run$",
     "^hyprpicker$",
 
 }
@@ -207,7 +207,7 @@ hl.window_rule({
 
     match = {
 
-        class = "^swaync%-control%-center$",
+        class = "^swaync-control-center$",
 
     },
 

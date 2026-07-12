@@ -2,140 +2,174 @@
 
 # Obsyx
 
-### A modular Wayland desktop framework built on Hyprland and Lua.
+### A modular Wayland desktop framework built with Hyprland and Lua.
 
-*Elegant. Performant. Engineered.*
+Elegant by design. Engineered for maintainability.
 
 ---
 
-![Platform](https://img.shields.io/badge/Platform-Linux-blue)
-![Wayland](https://img.shields.io/badge/Wayland-Hyprland-purple)
-![Language](https://img.shields.io/badge/Language-Lua-blueviolet)
-![Status](https://img.shields.io/badge/Status-Active%20Development-success)
+![Platform](https://img.shields.io/badge/Platform-Linux-1793D1?style=for-the-badge)
+![Wayland](https://img.shields.io/badge/Wayland-Hyprland-6E4AFF?style=for-the-badge)
+![Language](https://img.shields.io/badge/Language-Lua-2C2D72?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Active-7ED957?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
 
 </div>
 
 ---
 
-# Overview
+## Overview
 
-Obsyx is a modular desktop framework that transforms Hyprland into a cohesive operating environment.
+Obsyx is a modular desktop framework for Hyprland that treats desktop configuration as software engineering rather than a collection of configuration files.
 
-Rather than treating desktop configuration as a collection of unrelated dotfiles, Obsyx organizes every subsystem into reusable modules with clear responsibilities.
+The framework currently ships with **Noctis Amethyst**, its default reference theme, which showcases the design language, architecture, and interaction model that future themes will build upon.
 
-The project applies software engineering principles—including modular architecture, separation of concerns, configuration abstraction, and reusable design systems—to desktop customization.
+Instead of one large monolithic configuration, every subsystem is isolated into reusable modules with clearly defined responsibilities.
 
----
+The project focuses on:
 
-# Design Goals
-
-Obsyx is built around five principles.
-
-- **Modularity** — every subsystem lives independently.
-- **Consistency** — appearance, interaction, and behavior follow shared rules.
-- **Performance** — smooth animations and low overhead.
-- **Maintainability** — scalable project architecture.
-- **Extensibility** — new features should integrate without restructuring the project.
+- Clean architecture
+- Modular configuration
+- Consistent visual language
+- Smooth interaction design
+- Hardware-aware optimization
+- Long-term maintainability
 
 ---
 
-# Current Features
+# Design Philosophy
 
-## Desktop Architecture
+Obsyx follows a simple principle:
 
-- Modular Lua configuration
-- Registry-driven configuration
-- Production-grade project hierarchy
-- Environment abstraction
-- Component separation
+> Every configuration file should have one responsibility.
 
-## Window Management
+Instead of hundreds of unrelated settings inside a single file, the desktop is composed of independent modules.
 
-- Advanced window rules
-- Workspace rules
-- Floating policies
-- Smart fullscreen behavior
-- Scratch workspace
-- Directional navigation
-- Keyboard-first workflow
+```
+Variables
+      │
+      ▼
+Environment
+      │
+      ▼
+Appearance
+      │
+      ▼
+Layouts
+      │
+      ▼
+Rules
+      │
+      ▼
+Keybindings
+      │
+      ▼
+Runtime
+```
 
-## Appearance
-
-- Glassmorphism
-- Blur pipeline
-- Dynamic opacity
-- Gradient borders
-- Rounded geometry
-- Modern animation system
-
-## Layouts
-
-- Dwindle
-- Master
-- Workspace policies
-- Independent monitor workspaces
-
-## Input
-
-- Mouse
-- Keyboard
-- Touchpad
-- Gesture support
+Each layer only depends on the layers above it.
 
 ---
 
 # Project Structure
 
 ```
-Obsyx
+hypr/
+
+├── config/
 │
-├── config
-│   ├── appearance
-│   ├── binds
-│   ├── layouts
-│   ├── rules
-│   ├── autostart.lua
-│   ├── env.lua
-│   ├── general.lua
-│   ├── input.lua
-│   ├── misc.lua
-│   ├── monitors.lua
-│   └── variables.lua
+├── appearance/
+│   ├── animations.lua
+│   └── decoration.lua
 │
-├── themes
+├── binds/
+│   ├── apps.lua
+│   ├── media.lua
+│   ├── screenshots.lua
+│   ├── system.lua
+│   ├── windows.lua
+│   └── workspaces.lua
 │
-├── scripts
+├── layouts/
+│   ├── dwindle.lua
+│   └── master.lua
 │
-└── hyprland.lua
+├── rules/
+│   ├── windows.lua
+│   └── workspaces.lua
+│
+├── autostart.lua
+├── env.lua
+├── general.lua
+├── input.lua
+├── misc.lua
+├── monitors.lua
+└── variables.lua
 ```
 
-Each directory owns a single concern, making the configuration easier to extend and maintain.
+---
+
+# Current Features
+
+## Architecture
+
+- Modular Lua configuration
+- Central command registry
+- Layered configuration loading
+- Reusable modules
+- Production-oriented file hierarchy
+
+## Desktop
+
+- Activity-oriented workspaces
+- Advanced window management
+- Comprehensive keybinding system
+- Dynamic layouts
+- Floating window rules
+- Scratchpad workspace
+
+## Visuals
+
+- Glass-inspired desktop
+- Blur and transparency
+- Custom animation curves
+- Workspace transitions
+- Dynamic borders
+- Rounded window geometry
+
+## System Integration
+
+- Wallpaper daemon
+- Clipboard history
+- Notifications
+- Audio controls
+- Brightness controls
+- Screenshot workflow
+- Bluetooth integration
+- Network integration
 
 ---
 
-# Philosophy
+# Goals
 
-Obsyx is designed as a desktop framework rather than a collection of configuration files.
+Obsyx is evolving toward a complete desktop framework featuring:
 
-Every module should answer exactly one question.
-
-Examples:
-
-- How should windows behave?
-- How should workspaces behave?
-- How should animations feel?
-- Which applications belong to the system?
-- What does the visual language look like?
-
-This architecture keeps complexity localized while allowing the desktop to evolve without becoming difficult to maintain.
+- Theme engine
+- Design token system
+- Component library
+- Automated installer
+- Configuration validation
+- Documentation generator
+- Multiple desktop variants
+- Plugin support
 
 ---
 
-# Technology
+# Technologies
 
-- Hyprland (Lua configuration)
-- Wayland
+- Hyprland
 - Lua
+- Wayland
 - Kitty
 - Waybar
 - Rofi
@@ -146,69 +180,43 @@ This architecture keeps complexity localized while allowing the desktop to evolv
 
 ---
 
-# Roadmap
+# Philosophy
 
-### Phase 1 — Foundation
+Obsyx values:
 
-- Modular architecture
-- Window policies
-- Workspace policies
-- Animation engine
-- Decoration engine
+- Simplicity over complexity
+- Consistency over novelty
+- Architecture over shortcuts
+- Performance over decoration
+- Maintainability over convenience
 
-### Phase 2 — Desktop
-
-- Waybar
-- Notification center
-- Lock screen
-- Launcher
-- Theme engine
-
-### Phase 3 — Design System
-
-- Shared color tokens
-- Typography system
-- Material presets
-- Theme variants
-
-### Phase 4 — Developer Experience
-
-- Installer
-- Dependency checker
-- Configuration validation
-- Documentation generator
-
-### Phase 5 — Ecosystem
-
-- Community themes
-- Plugin support
-- Package distribution
-- Continuous integration
+Every module should be understandable in isolation and reusable without modification.
 
 ---
 
-# Contributing
+# Status
 
-Contributions are welcome.
+Current development stage:
 
-When contributing, prioritize:
+**Foundation Complete**
 
-- Readability
-- Maintainability
-- Consistency
-- Performance
-- Simplicity
+The core architecture is implemented and actively evolving toward a fully documented desktop framework.
+
+See:
+
+- ROADMAP.md
+- CHANGELOG.md
 
 ---
 
 # License
 
-MIT License.
+Released under the MIT License.
 
 ---
 
 <div align="center">
 
-**Obsyx is an exploration of what desktop configuration looks like when treated as software engineering rather than scripting.**
+Built with Hyprland, Lua, and an appreciation for well-structured software.
 
 </div>
