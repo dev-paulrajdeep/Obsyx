@@ -1,0 +1,25 @@
+# System
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Logs
+*.log
+
+# Swap files
+*.swp
+*.swo
+
+# Lua cache
+luac.out
+
+# Build
+build/
+
+# Temporary
+tmp/
+.cache/
