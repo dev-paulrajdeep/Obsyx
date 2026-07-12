@@ -69,7 +69,7 @@ hl.config({
         -- Opacity
         --------------------------------------------------------------------
 
-        active_opacity   = 0.78,
+        active_opacity   = 0.75,
 
         inactive_opacity = 0.64,
 

@@ -1,0 +1,9 @@
+{
+    "Lua.runtime.version": "LuaJIT",
+
+    "Lua.workspace.library": [
+        "/usr/share/hypr/stubs"
+    ],
+
+    "Lua.workspace.checkThirdParty": false
+}

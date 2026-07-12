@@ -55,6 +55,9 @@ hl.window_rule({
 -- Floating Utilities
 --------------------------------------------------------------------------------
 
+-- NOTE: class/title are matched against Hyprland's own regex engine, not Lua
+-- patterns. Hyphens and dots are not special here and should NOT be escaped
+-- with '%' -- that's a Lua-pattern habit that doesn't apply to this field.
 local FloatingUtilities = {
 
     "^blueman-manager$",
@@ -156,7 +159,7 @@ hl.window_rule({
 
     match = {
 
-        title = "Picture%-in%-Picture",
+        title = "Picture-in-Picture",
 
     },
 

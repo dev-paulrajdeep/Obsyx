@@ -30,16 +30,11 @@ Registry.Apps = {
 Registry.Desktop = {
 
     launcher       = "rofi -show drun",
-
     lock           = "hyprlock",
     logout         = "wlogout",
-
     notification   = "swaync",
-
     wallpaper      = "awww",
-
     statusBar      = "waybar",
-
 }
 
 --------------------------------------------------------------------------------
@@ -49,11 +44,8 @@ Registry.Desktop = {
 Registry.Tools = {
 
     screenshot     = "hyprshot",
-
     colorPicker    = "hyprpicker",
-
     calculator     = "qalculate-gtk",
-
     clipboard      = "wl-copy",
     clipboardStore = "cliphist",
 
@@ -66,9 +58,7 @@ Registry.Tools = {
 Registry.Services = {
 
     bluetooth      = "blueman-manager",
-
     network        = "nm-connection-editor",
-
     media          = "playerctl",
 
 }
@@ -80,19 +70,12 @@ Registry.Services = {
 Registry.Startup = {
 
     wallpaperDaemon    = "awww-daemon",
-
     statusBar          = "waybar",
-
     notificationDaemon = "swaync",
-
     wallpaper          = "awww img ~/Pictures/Wallpapers/default.jpg",
-
     clipboardText      = "wl-paste --type text --watch cliphist store",
-   
     clipboardImage     = "wl-paste --type image --watch cliphist store",
-
     networkApplet      = "nm-applet",
-
     bluetoothApplet    = "blueman-applet",
 
 }
@@ -104,7 +87,6 @@ Registry.Startup = {
 Registry.Paths = {
 
     wallpapers = "~/Pictures/Wallpapers",
-
     defaultWallpaper = "~/Pictures/Wallpapers/default.jpg",
 
 }
@@ -161,19 +143,12 @@ Registry.Screenshot = {
 Registry.Session = {
 
     lock       = Registry.Desktop.lock,
-
     logout     = "hyprctl dispatch exit",
-
     powerMenu  = Registry.Desktop.logout,
-
     suspend    = "systemctl suspend",
-
     reboot     = "systemctl reboot",
-
     shutdown   = "systemctl poweroff",
-
     hibernate  = "systemctl hibernate",
-
     monitorOff = "hyprctl dispatch dpms off",
 
 }

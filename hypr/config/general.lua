@@ -2,10 +2,11 @@
 -- Noctis Amethyst
 -- Permissions
 --
--- Explicitly grants Hyprland ecosystem permissions to trusted applications.
+-- Explicitly grants privileged Hyprland ecosystem permissions to trusted
+-- applications.
 --
 -- NOTE:
--- Permission changes require a full Hyprland restart.
+-- Changes require a full Hyprland restart.
 --------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
@@ -16,7 +17,7 @@ hl.config({
 
     ecosystem = {
 
-        -- Require explicit permission for privileged ecosystem actions.
+        -- Require explicit permission for privileged actions.
         enforce_permissions = true,
 
     },
@@ -24,29 +25,39 @@ hl.config({
 })
 
 --------------------------------------------------------------------------------
--- Screen Capture
+-- Permission Rules
 --------------------------------------------------------------------------------
 
--- Hyprshot
-hl.permission(
-    "/usr/(bin|local/bin)/hyprshot",
-    "screencopy",
-    "allow"
-)
+local Permissions = {
 
--- XDG Desktop Portal
-hl.permission(
-    "/usr/(lib|libexec|lib64)/xdg-desktop-portal-hyprland",
-    "screencopy",
-    "allow"
-)
+    --------------------------------------------------------------------------
+    -- Screen Capture
+    --------------------------------------------------------------------------
 
---------------------------------------------------------------------------------
--- Plugin Management
---------------------------------------------------------------------------------
+    {
+        executable = "/usr/(bin|local/bin)/hyprshot",
+        permission = "screencopy",
+        policy = "allow",
+    },
 
-hl.permission(
-    "/usr/(bin|local/bin)/hyprpm",
-    "plugin",
-    "allow"
-)
+    {
+        executable = "/usr/(lib|libexec|lib64)/xdg%-desktop%-portal%-hyprland",
+        permission = "screencopy",
+        policy = "allow",
+    },
+
+    --------------------------------------------------------------------------
+    -- Plugin Management
+    --------------------------------------------------------------------------
+
+    {
+        executable = "/usr/(bin|local/bin)/hyprpm",
+        permission = "plugin",
+        policy = "allow",
+    },
+
+}
+
+for _, spec in ipairs(Permissions) do
+    hl.permission(spec)
+end
