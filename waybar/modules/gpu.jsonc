@@ -1,0 +1,20 @@
+{
+    "custom/gpu": {
+        "exec": "~/.config/waybar/scripts/gpuinfo.sh",
+        "return-type": "json",
+
+        "interval": 2,
+
+        "format": "{}",
+
+        // Same escape fix as cpu.jsonc — protects against unescaped markup
+        // characters in driver/process strings from the GPU script output.
+        "escape": true,
+
+        "tooltip": true,
+
+        "on-click": "kitty -e nvtop",
+        "on-click-middle": "kitty -e btop",
+        "on-click-right": "nvidia-settings"
+    }
+}

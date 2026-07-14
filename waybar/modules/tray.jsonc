@@ -1,0 +1,41 @@
+{
+    // Added alongside plain "tray": a native Waybar drawer group so the
+    // tray sits hidden behind a "▸" toggle instead of on the bar by
+    // default, matching the "🔔  ▸  ⏻" end-state layout.
+    //
+    // Group mechanics (per Waybar's group module): the FIRST entry in
+    // "modules" is the always-visible "leader" — here, custom/tray-toggle.
+    // Every entry after it is a hidden "drawer child" revealed on
+    // interaction — here, just "tray". "click-to-reveal": true makes that
+    // an explicit left-click rather than a hover, since "▸" reads as a
+    // button, not a hover zone.
+    "group/tray-expander": {
+        "orientation": "inherit",
+        "drawer": {
+            "transition-duration": 400,
+            "children-class": "tray-drawer-child",
+            "transition-left-to-right": false,
+            "click-to-reveal": true
+        },
+        "modules": [
+            "custom/tray-toggle",
+            "tray"
+        ]
+    },
+
+    "custom/tray-toggle": {
+        "format": "󰄾",
+        "tooltip": true,
+        "tooltip-format": "Click to show background services"
+    },
+
+    "tray": {
+        "icon-size": 16,
+        "spacing": 8,
+
+        "show-passive-items": false,
+        "reverse-direction": false,
+
+        "tooltip": true
+    }
+}

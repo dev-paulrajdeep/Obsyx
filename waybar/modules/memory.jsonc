@@ -1,0 +1,17 @@
+{
+    "custom/memory": {
+        "exec": "~/.config/waybar/scripts/memoryinfo.sh",
+        "return-type": "json",
+
+        "interval": 2,
+
+        "format": "{}",
+
+        "tooltip": true,
+        "escape": true,
+
+        "on-click": "kitty -e btop",
+        "on-click-middle": "kitty -e htop",
+        "on-click-right": "kitty -e free -h; bash"
+    }
+}

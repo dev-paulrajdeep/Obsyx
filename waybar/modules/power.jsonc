@@ -1,0 +1,14 @@
+{
+    "custom/power": {
+        "format": "󰐥",
+
+        "tooltip": true,
+        "tooltip-format": "<b>Power</b>\n\nLock\nLogout\nSuspend\nHibernate\nReboot\nShutdown",
+
+        "on-click": "wlogout",
+        "on-click-middle": "hyprlock",
+        "on-click-right": "systemctl suspend",
+
+        "escape": true
+    }
+}

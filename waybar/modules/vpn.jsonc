@@ -1,0 +1,17 @@
+{
+    "custom/vpn": {
+        "exec": "~/.config/waybar/scripts/vpninfo.sh",
+        "return-type": "json",
+
+        "interval": 5,
+
+        "format": "{}",
+
+        "tooltip": true,
+        "escape": true,
+
+        "on-click": "nm-connection-editor",
+        "on-click-middle": "kitty -e nmcli connection show --active",
+        "on-click-right": "kitty -e journalctl -u NetworkManager -f"
+    }
+}

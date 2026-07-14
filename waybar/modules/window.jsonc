@@ -1,0 +1,45 @@
+{
+    "hyprland/window": {
+        "format": "{}",
+
+        "separate-outputs": true,
+
+        "rewrite": {
+            "(.*) — Visual Studio Code": "$1",
+            "(.*) - Visual Studio Code": "$1",
+            "(.*) — VSCodium": "$1",
+            "(.*) - VSCodium": "$1",
+
+            "(.*) — Vivaldi": "$1",
+            "(.*) - Vivaldi": "$1",
+
+            "(.*) — Mozilla Firefox": "$1",
+            "(.*) - Mozilla Firefox": "$1",
+
+            "(.*) — Google Chrome": "$1",
+            "(.*) - Google Chrome": "$1",
+
+            "(.*) — Kitty": "$1",
+            "(.*) - kitty": "$1",
+
+            "(.*) — Discord": "$1",
+            "(.*) - Discord": "$1",
+
+            "(.*) — Obsidian": "$1",
+            "(.*) - Obsidian": "$1",
+
+            "(.*) - File Manager": "$1",
+
+            // Deliberately NOT adding a generic " - .*$" catch-all for
+            // Spotify/media players: their titles are legitimately
+            // "Track - Artist", and a blanket rule would strip the artist
+            // name instead of the app suffix. Add per-app rules only.
+
+            "^$": ""
+        },
+
+        "max-length": 60,
+
+        "tooltip": false
+    }
+}

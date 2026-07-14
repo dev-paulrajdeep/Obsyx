@@ -1,0 +1,16 @@
+{
+    "custom/launcher": {
+        "format": "󰣇",
+
+        "tooltip": true,
+        "tooltip-format": "<b>Obsyx Launcher</b>\n\nApplications\nFiles\nCommands\nCalculator",
+
+        "on-click": "rofi -show drun",
+        "on-click-right": "rofi -show run",
+        "on-click-middle": "rofi -show filebrowser",
+        "on-scroll-up": "rofi -show calc",
+        "on-scroll-down": "rofi -show calc",
+
+        "escape": true
+    }
+}

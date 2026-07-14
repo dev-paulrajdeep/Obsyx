@@ -1,0 +1,109 @@
+{
+    //──────────────────────────────────────────────
+    // Obsyx Waybar
+    //──────────────────────────────────────────────
+    //
+    // Information hierarchy (left → center → right):
+    //   Launcher → Workspaces → Window        (navigation: where am I / going)
+    //   Clock                                 (glanceable center)
+    //   Media → CPU/RAM/GPU → Network/VPN →
+    //   Audio/Bluetooth → Battery →
+    //   Notifications → Tray → Power           (context → telemetry → controls)
+
+    "layer": "top",
+    "position": "top",
+
+    "height": 40,
+    "spacing": 8,
+
+    "margin-top": 10,
+    "margin-left": 12,
+    "margin-right": 12,
+
+    "exclusive": true,
+    "passthrough": false,
+
+    "gtk-layer-shell": true,
+    "reload_style_on_change": true,
+
+    //──────────────────────────────────────────────
+    // Left — navigation
+    //──────────────────────────────────────────────
+
+    "modules-left": [
+        "custom/launcher",
+        "hyprland/workspaces",
+        "hyprland/window"
+    ],
+
+    //──────────────────────────────────────────────
+    // Center — time
+    //──────────────────────────────────────────────
+
+    "modules-center": [
+        "clock"
+    ],
+
+    //──────────────────────────────────────────────
+    // Right — context → telemetry → controls
+    //──────────────────────────────────────────────
+
+    "modules-right": [
+        "custom/media",
+
+        "custom/cpu",
+        "custom/memory",
+        "custom/gpu",
+
+        "custom/network",
+        "custom/vpn",
+
+        "pulseaudio",
+        "bluetooth",
+
+        "battery",
+
+        "custom/notifications",
+
+        // Tray lives behind a native Waybar drawer group instead of sitting
+        // exposed on the bar — click the "▸" leader to reveal it, matching
+        // the "🔔 ▸ ⏻" end-state design. "custom/tray-toggle" (the leader)
+        // and the drawer wiring live in tray.jsonc alongside "tray" itself.
+        "group/tray-expander",
+
+        "custom/power"
+    ],
+
+    //──────────────────────────────────────────────
+    // Include modules
+    //──────────────────────────────────────────────
+
+    "include": [
+        "modules/launcher.jsonc",
+
+        "modules/workspaces.jsonc",
+        "modules/window.jsonc",
+
+        "modules/clock.jsonc",
+
+        "modules/media.jsonc",
+
+        "modules/cpu.jsonc",
+        "modules/memory.jsonc",
+        "modules/gpu.jsonc",
+
+        "modules/network.jsonc",
+        "modules/vpn.jsonc",
+
+        "modules/audio.jsonc",
+        "modules/bluetooth.jsonc",
+
+        "modules/battery.jsonc",
+
+        "modules/notifications.jsonc",
+
+        "modules/tray.jsonc",
+
+        "modules/power.jsonc"
+    ]
+}

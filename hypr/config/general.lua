@@ -28,6 +28,9 @@ hl.config({
 -- Permission Rules
 --------------------------------------------------------------------------------
 
+-- NOTE: binary is matched against Hyprland's own regex engine, not Lua
+-- patterns -- hyphens are not special here and should NOT be escaped with
+-- '%'. hl.permission expects exactly { binary, type, mode }.
 local Permissions = {
 
     --------------------------------------------------------------------------
@@ -35,15 +38,15 @@ local Permissions = {
     --------------------------------------------------------------------------
 
     {
-        executable = "/usr/(bin|local/bin)/hyprshot",
-        permission = "screencopy",
-        policy = "allow",
+        binary = "/usr/(bin|local/bin)/hyprshot",
+        type = "screencopy",
+        mode = "allow",
     },
 
     {
-        executable = "/usr/(lib|libexec|lib64)/xdg%-desktop%-portal%-hyprland",
-        permission = "screencopy",
-        policy = "allow",
+        binary = "/usr/(lib|libexec|lib64)/xdg-desktop-portal-hyprland",
+        type = "screencopy",
+        mode = "allow",
     },
 
     --------------------------------------------------------------------------
@@ -51,9 +54,9 @@ local Permissions = {
     --------------------------------------------------------------------------
 
     {
-        executable = "/usr/(bin|local/bin)/hyprpm",
-        permission = "plugin",
-        policy = "allow",
+        binary = "/usr/(bin|local/bin)/hyprpm",
+        type = "plugin",
+        mode = "allow",
     },
 
 }

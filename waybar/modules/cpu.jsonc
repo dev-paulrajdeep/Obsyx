@@ -1,0 +1,22 @@
+{
+    "custom/cpu": {
+        "exec": "~/.config/waybar/scripts/cpuinfo.sh",
+        "return-type": "json",
+
+        "interval": 2,
+
+        "format": "{}",
+
+        // Every other JSON-returning custom module in this bar escapes
+        // output; this one didn't. A stray "&" or "<" from the script
+        // (process name, unit string, etc.) would otherwise break Pango
+        // markup and silently kill this segment of the bar.
+        "escape": true,
+
+        "tooltip": true,
+
+        "on-click": "kitty -e btop",
+        "on-click-middle": "kitty -e htop",
+        "on-click-right": "kitty -e nvtop"
+    }
+}

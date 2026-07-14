@@ -1,0 +1,38 @@
+{
+    // Audio output control (PulseAudio/PipeWire backend via pactl/wpctl)
+    "pulseaudio": {
+        "format": "{icon}",
+        "format-muted": "󰖁",
+        "format-bluetooth": "󰂯",
+        "format-bluetooth-muted": "󰂲",
+        "format-icons": {
+            "default": [
+                "󰕿",
+                "󰖀",
+                "󰕾"
+            ]
+        },
+
+        "max-volume": 100,
+
+        // Scroll-to-adjust-volume is handled natively via scroll-step.
+        // Do NOT add "on-scroll-up" / "on-scroll-down" keys here — even as
+        // empty strings they REPLACE the built-in volume-scroll behavior
+        // with a no-op. That was silently killing scroll control before.
+        "scroll-step": 2,
+        "reverse-scrolling": false,
+        "smooth-scrolling-threshold": 1,
+
+        "tooltip": true,
+        "tooltip-format": "<b>{desc}</b>\nVolume: {volume}%",
+
+        "on-click": "pavucontrol",
+        "on-click-middle": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "on-click-right": "pwvucontrol",
+
+        "states": {
+            "warning": 40,
+            "critical": 15
+        }
+    }
+}

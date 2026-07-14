@@ -1,0 +1,17 @@
+{
+    "custom/network": {
+        "exec": "~/.config/waybar/scripts/networkinfo.sh",
+        "return-type": "json",
+
+        "interval": 2,
+
+        "format": "{}",
+
+        "tooltip": true,
+        "escape": true,
+
+        "on-click": "nm-connection-editor",
+        "on-click-middle": "kitty -e nmtui",
+        "on-click-right": "kitty -e nmcli device status"
+    }
+}

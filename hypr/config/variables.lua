@@ -18,7 +18,7 @@ Registry.Apps = {
     browser        = "vivaldi",
     editor         = "code",
     musicPlayer    = "spotify",
-    fileManager    = "dolphin",
+    fileManager    = "thunar",
     terminalFM     = "yazi",
 
 }

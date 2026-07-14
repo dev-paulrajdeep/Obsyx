@@ -1,0 +1,34 @@
+{
+    "hyprland/workspaces": {
+        "all-outputs": true,
+        "active-only": false,
+        "move-to-monitor": false,
+        "disable-scroll": false,
+        "sort-by-number": true,
+        
+        "persistent-workspaces": {
+            "*": 10
+        },
+
+        "format": "{icon}",
+        "format-icons": {
+            "1": "󰆍", 
+            "2": "󰖟",
+            "3": "󰨞",
+            "4": "󰉋",
+            "5": "󰚩",
+            "6": "󰭹",
+            "7": "󰎆",
+            "8": "󰏖",
+            "9": "󰝚",
+            "10": "󰆍",
+            "urgent": "󱈸", 
+            "default": "" 
+        },
+
+        // Manual IPC Override: Force direct hyper-control dispatch on click
+        "on-click": "hyprctl dispatch workspace {id}",
+
+        "tooltip": false
+    }
+}
