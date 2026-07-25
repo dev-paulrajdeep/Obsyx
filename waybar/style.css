@@ -1,0 +1,10 @@
+/* OBSYX — NOCTIS AMETHYST
+   Import order is intentional: tokens → foundations → containers → modules
+   → overlays → motion. Each file owns one layer of the design system. */
+
+@import url("theme.css");
+@import url("styles/bar.css");
+@import url("styles/groups.css");
+@import url("styles/modules.css");
+@import url("styles/widgets.css");
+@import url("styles/animations.css");

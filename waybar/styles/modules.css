@@ -1,0 +1,181 @@
+/* Navigation */
+
+#custom-launcher {
+  color: @ink-strong;
+  font-size: 15px;
+  padding: 0 2px;
+}
+
+#group-launcher:hover #custom-launcher {
+  color: @amethyst-ink;
+}
+
+#workspaces {
+  background: transparent;
+  margin: 0;
+  padding: 0;
+}
+
+#workspaces button {
+  background: transparent;
+  color: @ink-quiet;
+  font-size: 11px;
+  margin: 0 2px;
+  padding: 4px 8px;
+  border-radius: 10px;
+}
+
+#workspaces button:hover {
+  background-color: @amethyst-wash;
+  color: @ink-strong;
+}
+
+#workspaces button.active {
+  background-color: @amethyst-fill;
+  color: @amethyst-ink;
+}
+
+#workspaces button.urgent {
+  background-color: @danger-wash;
+  color: @danger;
+}
+
+/* Temporal anchor */
+
+#clock {
+  color: @ink-strong;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+/* Contextual media is intentionally not a permanent container. When no media
+   exists it takes no space; playing earns a compact, focused surface. */
+#custom-media {
+  color: @ink-muted;
+  margin: 0 2px;
+  padding: 6px 10px;
+  border-radius: 14px;
+}
+
+#custom-media.playing {
+  background-color: @amethyst-wash;
+  border: 1px solid @amethyst-line;
+  color: @amethyst-ink;
+  box-shadow: 0 3px 12px @shadow;
+}
+
+#custom-media.paused {
+  background-color: @noctis-surface;
+  border: 1px solid @hairline;
+  color: @ink-default;
+}
+
+#custom-media.none,
+#custom-media.stopped {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+}
+
+/* System instrument cluster */
+
+#custom-cpu,
+#custom-memory,
+#custom-gpu,
+#custom-network,
+#custom-vpn,
+#pulseaudio,
+#bluetooth,
+#battery {
+  color: @ink-default;
+  padding: 0 8px;
+}
+
+#custom-memory,
+#custom-gpu,
+#custom-network,
+#custom-vpn,
+#pulseaudio,
+#bluetooth,
+#battery {
+  border-left: 1px solid @hairline;
+}
+
+#custom-cpu:hover,
+#custom-memory:hover,
+#custom-gpu:hover,
+#custom-network:hover,
+#custom-vpn:hover,
+#pulseaudio:hover,
+#bluetooth:hover,
+#battery:hover {
+  color: @ink-strong;
+}
+
+#custom-cpu.warning,
+#custom-memory.warning,
+#custom-gpu.warning,
+#battery.warning {
+  color: @warning;
+}
+
+#custom-cpu.critical,
+#custom-memory.critical,
+#custom-gpu.critical,
+#battery.critical {
+  color: @danger;
+}
+
+#custom-network.disconnected,
+#custom-vpn.disconnected,
+#custom-vpn.connecting,
+#bluetooth.disabled,
+#bluetooth.off {
+  color: @ink-quiet;
+}
+
+#custom-vpn.connected {
+  color: @amethyst-ink;
+}
+
+/* Attention and session controls */
+
+#custom-notifications {
+  color: @ink-muted;
+  margin: 0 2px;
+  padding: 0 6px;
+}
+
+#custom-notifications.notification {
+  color: @amethyst-ink;
+}
+
+#custom-notifications:hover,
+#custom-tray-toggle:hover {
+  color: @ink-strong;
+}
+
+#tray-expander {
+  padding: 6px 10px;
+}
+
+#custom-tray-toggle {
+  color: @ink-muted;
+}
+
+#tray {
+  background: transparent;
+  padding: 0 4px;
+}
+
+#custom-power {
+  color: @ink-strong;
+  font-size: 14px;
+  padding: 0 2px;
+}
+
+#group-power:hover #custom-power {
+  color: @danger;
+}

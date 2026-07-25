@@ -7,7 +7,7 @@
         // it unset lets Waybar auto-detect whatever it's actually called.
 
         "interval": 30,
-
+        "bat": "BAT1",
         "format": "{icon} {capacity}%",
         "format-charging": "󰂄 {capacity}%",
         "format-plugged": "󱐋 {capacity}%",
@@ -28,8 +28,7 @@
         ],
 
         "tooltip": true,
-        "tooltip-format": "<b>Battery</b>\n\nCharge : {capacity}%\nStatus : {status}\nRemaining : {time}\nPower : {power} W",
-
+        "tooltip-format": "<b>󰁹 Battery</b>\n\nCharge    : {capacity}%\nRemaining : {timeTo}\nPower     : {power} W\nHealth    : {health}%",
         "states": {
             "warning": 30,
             "critical": 20

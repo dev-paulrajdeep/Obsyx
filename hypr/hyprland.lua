@@ -49,6 +49,7 @@ require("config.layouts.master")
 
 require("config.rules.workspaces")
 require("config.rules.windows")
+require("config.rules.layers")
 
 --------------------------------------------------------------------------------
 -- Keybindings

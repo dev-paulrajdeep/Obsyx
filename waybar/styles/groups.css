@@ -1,0 +1,48 @@
+/* Containers communicate stable relationships. Shared treatment is the
+   default glass surface (elevation 1); individual groups only add hierarchy. */
+
+#group-launcher,
+#group-workspaces,
+#group-clock,
+#group-system,
+#tray-expander,
+#group-power {
+  background-color: @noctis-surface;
+  border: 1px solid @hairline;
+  border-radius: 14px;
+  box-shadow: 0 3px 12px @shadow;
+  margin: 0 2px;
+  padding: 6px 12px;
+}
+
+/* Hero anchors: an action, temporal orientation, and system exit. */
+#group-launcher,
+#group-clock {
+  background-color: @noctis-surface-raised;
+  border-color: @hairline-strong;
+  border-radius: 18px;
+}
+
+/* The telemetry cluster is deliberately one instrument, not eight pills. */
+#group-system {
+  padding: 6px 8px;
+}
+
+/* Session controls stay quiet until reached for. */
+#group-power {
+  background-color: @noctis-surface-raised;
+}
+
+#group-launcher:hover,
+#group-clock:hover,
+#group-workspaces:hover,
+#group-system:hover,
+#tray-expander:hover {
+  background-color: @noctis-surface-focus;
+  border-color: @hairline-strong;
+}
+
+#group-power:hover {
+  background-color: @danger-wash;
+  border-color: @danger;
+}

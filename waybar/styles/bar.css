@@ -1,0 +1,26 @@
+/* Foundation and typography — elevation 0. */
+
+* {
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+  font-family: "Inter", "SF Pro Display", "Roboto", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+window#waybar {
+  background: transparent;
+  color: @ink-default;
+}
+
+#window {
+  color: @ink-muted;
+  font-size: 12px;
+  font-weight: 400;
+  padding: 0 8px;
+}
+
+#window.empty {
+  opacity: 0;
+}

@@ -38,7 +38,8 @@
             "^$": ""
         },
 
-        "max-length": 60,
+        // Preserve the centered clock on compact laptop outputs.
+        "max-length": 36,
 
         "tooltip": false
     }

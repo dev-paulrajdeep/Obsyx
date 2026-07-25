@@ -1,0 +1,41 @@
+/* OBSYX — NOCTIS AMETHYST
+   GTK3 design tokens. Waybar 0.15 uses GTK3, so colors use GTK-native
+   @define-color tokens rather than browser-only custom properties. */
+
+/* Foundations — elevation 0: the compositor/wallpaper owns the background. */
+@define-color noctis-void          #121018;
+@define-color noctis-surface        rgba(22, 19, 29, 0.88);
+@define-color noctis-surface-raised rgba(25, 22, 35, 0.94);
+@define-color noctis-surface-focus  rgba(31, 26, 43, 0.97);
+@define-color noctis-overlay        rgba(29, 25, 39, 0.98);
+
+/* Foreground hierarchy. */
+@define-color ink-strong            rgba(255, 255, 255, 0.92);
+@define-color ink-default           rgba(255, 255, 255, 0.78);
+@define-color ink-muted             rgba(255, 255, 255, 0.62);
+@define-color ink-quiet             rgba(255, 255, 255, 0.42);
+
+/* Borders and depth. */
+@define-color hairline              rgba(255, 255, 255, 0.10);
+@define-color hairline-strong       rgba(255, 255, 255, 0.17);
+@define-color shadow                rgba(0, 0, 0, 0.34);
+
+/* Amethyst is interaction-only. */
+@define-color amethyst              #9b7ede;
+@define-color amethyst-ink          #dacbff;
+@define-color amethyst-wash         rgba(155, 126, 222, 0.16);
+@define-color amethyst-fill         rgba(155, 126, 222, 0.30);
+@define-color amethyst-line         rgba(155, 126, 222, 0.48);
+
+/* Restrained semantic states. */
+@define-color warning                #d8bb82;
+@define-color danger                 #d28a95;
+@define-color danger-wash            rgba(210, 138, 149, 0.16);
+
+/*
+   Spatial token reference (all component values below use this scale):
+   2, 4, 8, 12, 16, 24, 32 px.
+   Radius: 6 (small), 10 (medium), 14 (large), 18 (hero).
+   GTK3 has no CSS custom-property support; keeping dimensions in component
+   rules is deliberate compatibility, not an accidental browser-CSS fallback.
+*/

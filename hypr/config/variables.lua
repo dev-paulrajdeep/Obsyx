@@ -72,7 +72,7 @@ Registry.Startup = {
     wallpaperDaemon    = "awww-daemon",
     statusBar          = "waybar",
     notificationDaemon = "swaync",
-    wallpaper          = "awww img ~/Pictures/Wallpapers/default.jpg",
+    wallpaper          = "awww img ~/Pictures/Wallpapers/default.png",
     clipboardText      = "wl-paste --type text --watch cliphist store",
     clipboardImage     = "wl-paste --type image --watch cliphist store",
     networkApplet      = "nm-applet",
@@ -87,7 +87,7 @@ Registry.Startup = {
 Registry.Paths = {
 
     wallpapers = "~/Pictures/Wallpapers",
-    defaultWallpaper = "~/Pictures/Wallpapers/default.jpg",
+    defaultWallpaper = "~/Pictures/Wallpapers/default.png",
 
 }
 

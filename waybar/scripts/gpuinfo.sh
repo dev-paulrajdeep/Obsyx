@@ -4,15 +4,8 @@
 # Obsyx GPU Monitor
 ########################################
 #
-# BUGFIX (major): nvidia-smi's --format=csv output delimits fields with
-# ", " (comma+space). The previous version read that output with bash's
-# default whitespace-splitting `read`. Since GPU names almost always
-# contain spaces ("NVIDIA GeForce RTX 5060 Laptop GPU"), every field after
-# the first was silently misaligned — utilization, temperature, power,
-# clock and VRAM were all reading from the wrong column. Confirmed with a
-# side-by-side test: the old parser produced NAME="NVIDIA" TEMP="RTX"
-# POWER="5060" — completely garbage. Fixed by re-delimiting with awk
-# before the read.
+# NVIDIA telemetry is queried once per refresh. Its CSV fields are parsed by
+# Bash itself, preserving GPU names containing spaces without an awk process.
 #
 # BUGFIX: raw newlines in the JSON tooltip string — invalid JSON, rebuilt
 # with explicit "\n".
@@ -34,35 +27,63 @@ json_escape() {
 # Finds the hwmon directory whose "name" file matches $1 — avoids relying on
 # glob order, since hwmon0 is not guaranteed to be any particular device.
 find_hwmon() {
-    local target="$1" f
+    local target="${1,,}" f name
     for f in /sys/class/hwmon/hwmon*/name; do
         [[ -f "$f" ]] || continue
-        grep -qi "$target" "$f" 2>/dev/null && { dirname "$f"; return 0; }
+        IFS= read -r name < "$f" || continue
+        if [[ "${name,,}" == *"$target"* ]]; then
+            HWMON_DIR="${f%/name}"
+            return 0
+        fi
     done
     return 1
 }
 
-NVIDIA_OK=false
-command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi >/dev/null 2>&1 && NVIDIA_OK=true
+trim() {
+    REPLY="$1"
+    REPLY="${REPLY#"${REPLY%%[![:space:]]*}"}"
+    REPLY="${REPLY%"${REPLY##*[![:space:]]}"}"
+}
 
-AMD_BUSY_FILE=$(compgen -G "/sys/class/drm/card*/device/gpu_busy_percent" 2>/dev/null | head -1)
+format_microwatts() {
+    local microwatts="$1" tenths
+    tenths=$(( (microwatts + 50000) / 100000 ))
+    printf -v REPLY '%d.%d' "$((tenths / 10))" "$((tenths % 10))"
+}
+
+NVIDIA_DATA=""
+if command -v nvidia-smi >/dev/null 2>&1; then
+    NVIDIA_DATA=$(nvidia-smi \
+        --query-gpu=name,utilization.gpu,temperature.gpu,power.draw,clocks.current.graphics,memory.used,memory.total \
+        --format=csv,noheader,nounits 2>/dev/null)
+fi
+
+AMD_BUSY_FILE=""
+for busy_file in /sys/class/drm/card*/device/gpu_busy_percent; do
+    [[ -r "$busy_file" ]] || continue
+    AMD_BUSY_FILE="$busy_file"
+    break
+done
 
 ############################################
 # NVIDIA discrete GPU
 ############################################
 
-if $NVIDIA_OK; then
+if [[ -n "$NVIDIA_DATA" ]]; then
 
-    IFS='|' read -r NAME UTIL TEMP POWER CLOCK MEM_USED MEM_TOTAL <<< "$(
-        nvidia-smi \
-            --query-gpu=name,utilization.gpu,temperature.gpu,power.draw,clocks.current.graphics,memory.used,memory.total \
-            --format=csv,noheader,nounits \
-        | awk -F', ' 'BEGIN{OFS="|"} {$1=$1; print}'
-    )"
+    # Waybar displays the first GPU, matching the previous read behavior.
+    IFS= read -r NVIDIA_DATA <<< "$NVIDIA_DATA"
+    IFS=',' read -r NAME UTIL TEMP POWER CLOCK MEM_USED MEM_TOTAL <<< "$NVIDIA_DATA"
+    for field in NAME UTIL TEMP POWER CLOCK MEM_USED MEM_TOTAL; do
+        trim "${!field}"
+        printf -v "$field" '%s' "$REPLY"
+    done
 
     CLASS="normal"
-    (( TEMP >= 85 )) && CLASS="critical"
-    (( TEMP >= 75 && TEMP < 85 )) && CLASS="warning"
+    if [[ "$TEMP" =~ ^[0-9]+$ ]]; then
+        (( TEMP >= 85 )) && CLASS="critical"
+        (( TEMP >= 75 && TEMP < 85 )) && CLASS="warning"
+    fi
 
     TOOLTIP="<b>$(json_escape "$NAME")</b>\n\nUsage        ${UTIL}%\nClock        ${CLOCK} MHz\nTemperature  ${TEMP}°C\nPower        ${POWER} W\nVRAM         ${MEM_USED} / ${MEM_TOTAL} MiB"
 
@@ -74,15 +95,24 @@ if $NVIDIA_OK; then
 
 elif [[ -n "$AMD_BUSY_FILE" ]]; then
 
-    UTIL=$(cat "$AMD_BUSY_FILE" 2>/dev/null || echo 0)
+    UTIL=0
+    IFS= read -r UTIL < "$AMD_BUSY_FILE" || UTIL=0
 
-    HWMON_DIR=$(find_hwmon "amdgpu")
+    HWMON_DIR=""
+    find_hwmon "amdgpu" || true
     TEMP="--"
     POWER="--"
-    [[ -n "$HWMON_DIR" && -f "$HWMON_DIR/temp1_input" ]] && \
-        TEMP=$(awk '{printf "%.0f",$1/1000}' "$HWMON_DIR/temp1_input")
-    [[ -n "$HWMON_DIR" && -f "$HWMON_DIR/power1_average" ]] && \
-        POWER=$(awk '{printf "%.1f",$1/1000000}' "$HWMON_DIR/power1_average")
+    if [[ -n "$HWMON_DIR" && -r "$HWMON_DIR/temp1_input" ]]; then
+        IFS= read -r temp_millicelsius < "$HWMON_DIR/temp1_input"
+        [[ "$temp_millicelsius" =~ ^[0-9]+$ ]] && TEMP=$(( (temp_millicelsius + 500) / 1000 ))
+    fi
+    if [[ -n "$HWMON_DIR" && -r "$HWMON_DIR/power1_average" ]]; then
+        IFS= read -r power_microwatts < "$HWMON_DIR/power1_average"
+        if [[ "$power_microwatts" =~ ^[0-9]+$ ]]; then
+            format_microwatts "$power_microwatts"
+            POWER="$REPLY"
+        fi
+    fi
 
     CLASS="normal"
     [[ "$TEMP" != "--" ]] && (( TEMP >= 85 )) && CLASS="critical"

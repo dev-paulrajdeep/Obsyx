@@ -99,12 +99,24 @@ temp="--"
     temp=$(awk '{printf "%.0f",$1/1000}' "$CPU_HWMON/temp1_input")
 
 ############################################
-# Package Power — same sensor scope as temperature
+# CPU Package Power
 ############################################
 
-power="--"
-[[ -n "$CPU_HWMON" && -f "$CPU_HWMON/power1_average" ]] && \
-    power=$(awk '{printf "%.1f",$1/1000000}' "$CPU_HWMON/power1_average")
+power="N/A"
+
+if [[ -n "$CPU_HWMON" ]]; then
+    for f in \
+        "$CPU_HWMON"/power1_average \
+        "$CPU_HWMON"/power_average \
+        "$CPU_HWMON"/power1_input \
+        "$CPU_HWMON"/power_input
+    do
+        if [[ -r "$f" ]]; then
+            power=$(awk '{printf "%.1f",$1/1000000}' "$f")
+            break
+        fi
+    done
+fi
 
 ############################################
 # Governor
@@ -135,7 +147,7 @@ fi
 ############################################
 # Output JSON
 ############################################
+TOOLTIP="$(json_escape "$MODEL")\n\nUsage        ${cpu_usage}%\nFrequency    ${freq} GHz\nTemperature  ${temp}°C\nGovernor     ${gov}"
 
-TOOLTIP="$(json_escape "$MODEL")\n\nUsage        ${cpu_usage}%\nFrequency    ${freq} GHz\nTemperature  ${temp}°C\nPower        ${power} W\nGovernor     ${gov}"
 
 printf '{"text":"󰍛 %s%%","tooltip":"%s","class":"%s"}\n' "$cpu_usage" "$TOOLTIP" "$CLASS"

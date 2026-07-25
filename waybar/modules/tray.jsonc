@@ -12,7 +12,7 @@
     "group/tray-expander": {
         "orientation": "inherit",
         "drawer": {
-            "transition-duration": 400,
+            "transition-duration": 240,
             "children-class": "tray-drawer-child",
             "transition-left-to-right": false,
             "click-to-reveal": true

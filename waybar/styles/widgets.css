@@ -1,0 +1,32 @@
+/* Overlays are elevation 3: opaque enough for legibility, never loud. */
+
+tooltip {
+  background-color: @noctis-overlay;
+  border: 1px solid @hairline-strong;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px @shadow;
+  color: @ink-strong;
+  padding: 8px 12px;
+}
+
+tooltip label {
+  color: @ink-default;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+#tray menu {
+  background-color: @noctis-overlay;
+  border: 1px solid @hairline-strong;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px @shadow;
+}
+
+scrollbar {
+  background: transparent;
+}
+
+scrollbar slider {
+  background-color: @ink-quiet;
+  border-radius: 6px;
+}

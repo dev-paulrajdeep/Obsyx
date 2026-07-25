@@ -16,6 +16,7 @@
         "on-scroll-up": "playerctl volume 0.05+",
         "on-scroll-down": "playerctl volume 0.05-",
 
-        "max-length": 40
+        // Context should not displace the clock or the system instrument.
+        "max-length": 28
     }
 }

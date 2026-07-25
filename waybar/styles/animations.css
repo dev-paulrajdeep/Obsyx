@@ -1,0 +1,27 @@
+/* Motion is state feedback. GTK3 supports transitions, but not browser-only
+   transforms, custom properties, :has(), or backdrop-filter. */
+
+#group-launcher,
+#group-clock,
+#group-workspaces,
+#group-system,
+#tray-expander,
+#group-power,
+#custom-media,
+#workspaces button {
+  transition: 160ms cubic-bezier(0.2, 0.0, 0.0, 1.0);
+}
+
+#custom-notifications,
+#custom-tray-toggle,
+#custom-power,
+#custom-cpu,
+#custom-memory,
+#custom-gpu,
+#custom-network,
+#custom-vpn,
+#pulseaudio,
+#bluetooth,
+#battery {
+  transition: color 120ms cubic-bezier(0.2, 0.0, 0.0, 1.0);
+}
