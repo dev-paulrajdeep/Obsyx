@@ -1,0 +1,65 @@
+{
+    "name": "Noctis Amethyst",
+    "version": "0.1.0",
+
+    "palette": {
+        "void":             "#121018",
+        "surface":          { "hex": "#16131d", "alpha": 0.88 },
+        "surface_raised":   { "hex": "#191623", "alpha": 0.94 },
+        "surface_focus":    { "hex": "#1f1a2b", "alpha": 0.97 },
+        "overlay":          { "hex": "#1d1927", "alpha": 0.98 },
+
+        "ink_strong":       { "hex": "#ffffff", "alpha": 0.92 },
+        "ink_default":      { "hex": "#ffffff", "alpha": 0.78 },
+        "ink_muted":        { "hex": "#ffffff", "alpha": 0.62 },
+        "ink_quiet":        { "hex": "#ffffff", "alpha": 0.42 },
+
+        "hairline":         { "hex": "#ffffff", "alpha": 0.10 },
+        "hairline_strong":  { "hex": "#ffffff", "alpha": 0.17 },
+
+        "shadow":           { "hex": "#000000", "alpha": 0.34 },
+
+        "accent":           "#9b7ede",
+        "accent_ink":       "#dacbff",
+        "accent_wash":      { "hex": "#9b7ede", "alpha": 0.16 },
+        "accent_fill":      { "hex": "#9b7ede", "alpha": 0.30 },
+        "accent_line":      { "hex": "#9b7ede", "alpha": 0.48 },
+
+        "accent_gradient_start": { "hex": "#8a63d2", "alpha": 0.933 },
+        "accent_gradient_end":   { "hex": "#c7a6ff", "alpha": 0.933 },
+
+        "warning":          "#d8bb82",
+        "danger":           "#d28a95",
+        "danger_wash":      { "hex": "#d28a95", "alpha": 0.16 },
+
+        "border_inactive":  { "hex": "#26232d", "alpha": 0.80 }
+    },
+
+    "geometry": {
+        "gaps_in": 5,
+        "gaps_out": 12,
+        "border_size": 2,
+        "rounding": 8,
+        "rounding_power": 2.4
+    },
+
+    "opacity": {
+        "active": 0.75,
+        "inactive": 0.64,
+        "fullscreen": 0.95
+    },
+
+    "blur": {
+        "size": 13,
+        "passes": 3,
+        "vibrancy": 0.32,
+        "contrast": 1.18,
+        "brightness": 1.0
+    },
+
+    "shadow": {
+        "range": 18,
+        "render_power": 4,
+        "color": { "hex": "#000000", "alpha": 0.533 }
+    }
+}
