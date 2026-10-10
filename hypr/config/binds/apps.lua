@@ -18,6 +18,7 @@ local Applications = {
     { "L",      Registry.Desktop.lock       },
     { "C",      Registry.Apps.editor        },
     { "M",      Registry.Apps.musicPlayer   },
+    { "V",      Registry.Desktop.clipboard  },
    
 }
 

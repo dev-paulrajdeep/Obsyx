@@ -30,6 +30,8 @@ Registry.Apps = {
 Registry.Desktop = {
 
     launcher       = "rofi -show drun",
+    clipboard      = "~/.config/rofi/scripts/cliphist.sh",
+    powerMenu      = "~/.config/rofi/scripts/powermenu.sh",
     lock           = "hyprlock",
     logout         = "wlogout",
     notification   = "swaync",
@@ -144,7 +146,7 @@ Registry.Session = {
 
     lock       = Registry.Desktop.lock,
     logout     = "hyprctl dispatch exit",
-    powerMenu  = Registry.Desktop.logout,
+    powerMenu  = Registry.Desktop.powerMenu,
     suspend    = "systemctl suspend",
     reboot     = "systemctl reboot",
     shutdown   = "systemctl poweroff",

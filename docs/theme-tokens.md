@@ -13,9 +13,17 @@ Obsyx uses a **canonical JSON token source** as the single source of truth for i
 | `hypr/config/appearance/decoration.lua` | Compositor styling bound to active theme tokens |
 | `waybar/generated/theme-tokens.css` | Generated Waybar GTK3 CSS tokens |
 | `waybar/style.css` | Waybar stylesheet entry point importing generated tokens |
+| `rofi/generated/theme-tokens.rasi` | Generated Rofi RASI tokens |
+| `rofi/config.rasi` | Central Rofi configuration importing active theme |
+| `rofi/theme.rasi` | Token-driven Noctis Amethyst glass theme for Rofi |
+| `rofi/powermenu.rasi` | Token-driven power controls dialog theme |
+| `rofi/clipboard.rasi` | Token-driven clipboard manager dialog theme |
+| `rofi/scripts/powermenu.sh` | Session management script (lock, suspend, logout, reboot, poweroff) |
+| `rofi/scripts/cliphist.sh` | Clipboard history script using `cliphist` and `wl-copy` |
 | `tests/test_build_tokens.py` | Token compiler automated test suite |
 | `tests/test_theme_loader.py` | Theme loader and decoration wiring test suite |
 | `tests/test_waybar_tokens.py` | Waybar token integration and consistency test suite |
+| `tests/test_rofi_theme.py` | Rofi configuration, theme, and scripts test suite |
 
 ## Hyprland Theme Loader & Decoration
 
@@ -33,6 +41,14 @@ Waybar styles are driven by the generated tokens without duplicate definitions:
 2. `waybar/theme.css` re-exports `generated/theme-tokens.css` for backwards compatibility while retaining the spatial token reference.
 3. Component modules (`waybar/modules/*.jsonc`) use pure semantic markup with zero hardcoded hex colors, delegating state colors (`.notification`, `.dnd-notification`) to `waybar/styles/modules.css`.
 
+## Rofi Component Library Integration
+
+Rofi application launcher, power menu, and clipboard history are styled via generated tokens:
+
+1. `rofi/generated/theme-tokens.rasi` provides the single source of truth for Rofi colors and geometry (`@rounding`, `@border-width`).
+2. `rofi/theme.rasi` imports `generated/theme-tokens.rasi` and applies Noctis Amethyst glass styling (`@noctis-surface-raised`, `@hairline-strong`, `@amethyst-fill`, `@amethyst-ink`).
+3. `rofi/scripts/powermenu.sh` and `rofi/scripts/cliphist.sh` invoke Rofi with dedicated modal themes (`rofi/powermenu.rasi` and `rofi/clipboard.rasi`) and are wired into `Registry.Desktop` and `Registry.Session`.
+
 ## Running the compiler
 
 From the repository root:
@@ -41,13 +57,14 @@ From the repository root:
 python3 tools/build_tokens.py
 ```
 
-This reads `core/tokens/noctis_amethyst.json` and generates both output files. The command accepts optional arguments:
+This reads `core/tokens/noctis_amethyst.json` and generates all output files. The command accepts optional arguments:
 
 ```bash
 python3 tools/build_tokens.py \
     --tokens core/tokens/noctis_amethyst.json \
     --lua-out hypr/themes/noctis_amethyst.lua \
-    --css-out waybar/generated/theme-tokens.css
+    --css-out waybar/generated/theme-tokens.css \
+    --rofi-out rofi/generated/theme-tokens.rasi
 ```
 
 ## Running the tests
@@ -69,6 +86,7 @@ The compiler translates these to:
 |--------|--------|------------|
 | Hyprland Lua | `"#9b7ede"` | `"rgba(9B7EDE29)"` |
 | Waybar CSS | `#9b7ede` | `rgba(155, 126, 222, 0.16)` |
+| Rofi RASI | `#9b7ede` | `rgba(155, 126, 222, 0.16)` |
 
 ## Adding a new token
 
