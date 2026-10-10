@@ -1,7 +1,12 @@
 --------------------------------------------------------------------------------
--- Noctis Amethyst
+-- Obsyx
 -- Decoration
+--
+-- Dynamically binds window geometry, borders, opacity, shadows, and blur
+-- from the active theme tokens.
 --------------------------------------------------------------------------------
+
+local theme = Theme or require("config.theme")
 
 hl.config({
 
@@ -11,11 +16,11 @@ hl.config({
         -- Layout
         ------------------------------------------------------------------------
 
-        gaps_in  = 5,
+        gaps_in  = theme.geometry.gaps_in,
 
-        gaps_out = 12,
+        gaps_out = theme.geometry.gaps_out,
 
-        border_size = 2,
+        border_size = theme.geometry.border_size,
 
         layout = "dwindle",
 
@@ -33,9 +38,9 @@ hl.config({
 
                 colors = {
 
-                    "rgba(8A63D2EE)",   -- Royal Amethyst
+                    theme.palette.accent_gradient_start,
 
-                    "rgba(C7A6FFEE)",   -- Soft Violet Highlight
+                    theme.palette.accent_gradient_end,
 
                 },
 
@@ -45,7 +50,7 @@ hl.config({
 
             inactive_border =
 
-                "rgba(26232DCC)",
+                theme.palette.border_inactive,
 
         },
 
@@ -61,19 +66,19 @@ hl.config({
         -- Geometry
         --------------------------------------------------------------------
 
-        rounding = 8,
+        rounding = theme.geometry.rounding,
 
-        rounding_power = 2.4,
+        rounding_power = theme.geometry.rounding_power,
 
         --------------------------------------------------------------------
         -- Opacity
         --------------------------------------------------------------------
 
-        active_opacity   = 0.75,
+        active_opacity   = theme.opacity.active,
 
-        inactive_opacity = 0.64,
+        inactive_opacity = theme.opacity.inactive,
 
-        fullscreen_opacity = 0.95,
+        fullscreen_opacity = theme.opacity.fullscreen,
 
         --------------------------------------------------------------------
         -- Shadow
@@ -83,11 +88,11 @@ hl.config({
 
             enabled = true,
 
-            range = 18,
+            range = theme.shadow.range,
 
-            render_power = 4,
+            render_power = theme.shadow.render_power,
 
-            color = "rgba(00000088)",
+            color = theme.shadow.color,
 
         },
 
@@ -95,21 +100,21 @@ hl.config({
         -- Blur
         --------------------------------------------------------------------
 
-    blur = {
+        blur = {
 
-        enabled = true,
+            enabled = true,
 
-        size = 13,
+            size = theme.blur.size,
 
-        passes = 3,
+            passes = theme.blur.passes,
 
-        vibrancy = 0.32,
+            vibrancy = theme.blur.vibrancy,
 
-        contrast = 1.18,
+            contrast = theme.blur.contrast,
 
-        brightness = 1.00,
+            brightness = theme.blur.brightness,
 
-    }
+        },
 
     },
 

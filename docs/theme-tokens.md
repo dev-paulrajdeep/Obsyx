@@ -9,8 +9,19 @@ Obsyx uses a **canonical JSON token source** as the single source of truth for i
 | `core/tokens/noctis_amethyst.json` | Canonical token source — edit this |
 | `tools/build_tokens.py` | Deterministic compiler |
 | `hypr/themes/noctis_amethyst.lua` | Generated Hyprland Lua theme table |
+| `hypr/config/theme.lua` | Hyprland dynamic theme loader |
+| `hypr/config/appearance/decoration.lua` | Compositor styling bound to active theme tokens |
 | `waybar/generated/theme-tokens.css` | Generated Waybar GTK3 CSS tokens |
-| `tests/test_build_tokens.py` | Automated test suite |
+| `tests/test_build_tokens.py` | Token compiler automated test suite |
+| `tests/test_theme_loader.py` | Theme loader and decoration wiring test suite |
+
+## Hyprland Theme Loader & Decoration
+
+Hyprland loads themes dynamically through `hypr/config/theme.lua`:
+
+1. `hypr/config/variables.lua` declares the active theme name (e.g. `Registry.Theme.name = "Noctis Amethyst"`).
+2. `hypr/config/theme.lua` slugifies the theme name, loads `hypr/themes/<slug>.lua`, validates required sections (`palette`, `geometry`, `blur`), and exposes the theme globally as `Theme` and in `Registry.Theme.current`.
+3. `hypr/config/appearance/decoration.lua` dynamically consumes the active theme's geometry (gaps, border size, rounding), palette (active gradient borders, inactive borders), opacity, shadows, and blur passes.
 
 ## Running the compiler
 
