@@ -11,13 +11,13 @@
         "exec-if": "which swaync-client",
 
         // {} = notification count from the "text" field, {icon} = glyph
-        // picked by the "alt" field via format-icons below. Previously this
-        // showed only the bare count with no visual state distinction.
+        // picked by the "alt" field via format-icons below. Visual state
+        // colors are controlled dynamically via CSS (.notification, .dnd).
         "format": "{} {icon}",
         "format-icons": {
-            "notification": "<span foreground='#a78bfa'>󰂚</span>",
+            "notification": "󰂚",
             "none": "󰂜",
-            "dnd-notification": "<span foreground='#a78bfa'>󰂛</span>",
+            "dnd-notification": "󰂛",
             "dnd-none": "󰂛"
         },
 

@@ -14,15 +14,12 @@
             "on-scroll": 1,
             "on-click-right": "mode",
 
-            // NOTE: these hex values are hand-set and NOT read from the
-            // Obsyx token generator. If the amethyst palette ever shifts,
-            // this is the one file that silently goes out of sync — worth
-            // templating this block from tokens.json at build time rather
-            // than hand-editing hex here.
+            // Semantic formatting: inherits typography and color hierarchy
+            // from tooltip design tokens (@ink-strong, @ink-default).
             "format": {
-                "months": "<span color='#d8b4fe'><b>{}</b></span>",
-                "weekdays": "<span color='#a78bfa'><b>{}</b></span>",
-                "today": "<span background='#8b5cf6' foreground='#ffffff'><b>{}</b></span>"
+                "months": "<b>{}</b>",
+                "weekdays": "<b>{}</b>",
+                "today": "<b><u>{}</u></b>"
             }
         },
 

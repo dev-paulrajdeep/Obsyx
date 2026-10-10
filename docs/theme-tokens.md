@@ -12,8 +12,10 @@ Obsyx uses a **canonical JSON token source** as the single source of truth for i
 | `hypr/config/theme.lua` | Hyprland dynamic theme loader |
 | `hypr/config/appearance/decoration.lua` | Compositor styling bound to active theme tokens |
 | `waybar/generated/theme-tokens.css` | Generated Waybar GTK3 CSS tokens |
+| `waybar/style.css` | Waybar stylesheet entry point importing generated tokens |
 | `tests/test_build_tokens.py` | Token compiler automated test suite |
 | `tests/test_theme_loader.py` | Theme loader and decoration wiring test suite |
+| `tests/test_waybar_tokens.py` | Waybar token integration and consistency test suite |
 
 ## Hyprland Theme Loader & Decoration
 
@@ -22,6 +24,14 @@ Hyprland loads themes dynamically through `hypr/config/theme.lua`:
 1. `hypr/config/variables.lua` declares the active theme name (e.g. `Registry.Theme.name = "Noctis Amethyst"`).
 2. `hypr/config/theme.lua` slugifies the theme name, loads `hypr/themes/<slug>.lua`, validates required sections (`palette`, `geometry`, `blur`), and exposes the theme globally as `Theme` and in `Registry.Theme.current`.
 3. `hypr/config/appearance/decoration.lua` dynamically consumes the active theme's geometry (gaps, border size, rounding), palette (active gradient borders, inactive borders), opacity, shadows, and blur passes.
+
+## Waybar Token Integration
+
+Waybar styles are driven by the generated tokens without duplicate definitions:
+
+1. `waybar/style.css` imports `generated/theme-tokens.css` directly as the foundation of its stylesheet import chain.
+2. `waybar/theme.css` re-exports `generated/theme-tokens.css` for backwards compatibility while retaining the spatial token reference.
+3. Component modules (`waybar/modules/*.jsonc`) use pure semantic markup with zero hardcoded hex colors, delegating state colors (`.notification`, `.dnd-notification`) to `waybar/styles/modules.css`.
 
 ## Running the compiler
 
