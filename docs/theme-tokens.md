@@ -13,6 +13,7 @@ Obsyx uses a **canonical JSON token source** as the single source of truth for i
 | `hypr/config/appearance/decoration.lua` | Compositor styling bound to active theme tokens |
 | `waybar/generated/theme-tokens.css` | Generated Waybar GTK3 CSS tokens |
 | `waybar/style.css` | Waybar stylesheet entry point importing generated tokens |
+| `waybar/scripts/runner.sh` | Portable telemetry script runner supporting dynamic and relative discovery |
 | `rofi/generated/theme-tokens.rasi` | Generated Rofi RASI tokens |
 | `rofi/config.rasi` | Central Rofi configuration importing active theme |
 | `rofi/theme.rasi` | Token-driven Noctis Amethyst glass theme for Rofi |
@@ -54,6 +55,7 @@ Waybar styles are driven by the generated tokens without duplicate definitions:
 1. `waybar/style.css` imports `generated/theme-tokens.css` directly as the foundation of its stylesheet import chain.
 2. `waybar/theme.css` re-exports `generated/theme-tokens.css` for backwards compatibility while retaining the spatial token reference.
 3. Component modules (`waybar/modules/*.jsonc`) use pure semantic markup with zero hardcoded hex colors, delegating state colors (`.notification`, `.dnd-notification`) to `waybar/styles/modules.css`.
+4. Telemetry modules (`cpu`, `gpu`, `media`, `memory`, `network`, `vpn`) resolve backend scripts portably via dynamic lookup across `$WAYBAR_SCRIPTS_DIR`, `./scripts`, `./waybar/scripts`, and `${XDG_CONFIG_HOME:-$HOME/.config}/waybar/scripts`, eliminating hardcoded user paths. Standalone script execution is provided via `waybar/scripts/runner.sh`.
 
 ## Rofi Component Library Integration
 

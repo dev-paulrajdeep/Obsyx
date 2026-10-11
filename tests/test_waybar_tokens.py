@@ -107,5 +107,55 @@ class TestWaybarTokenIntegration(unittest.TestCase):
                 self.fail(f'Failed to parse JSONC in {os.path.relpath(jsonc_file, REPO_ROOT)}: {e}')
 
 
+class TestWaybarModulePortability(unittest.TestCase):
+    """Verifies that Waybar telemetry modules do not hardcode paths and support portable execution."""
+
+    TELEMETRY_MODULES = [
+        'cpu.jsonc',
+        'gpu.jsonc',
+        'media.jsonc',
+        'memory.jsonc',
+        'network.jsonc',
+        'vpn.jsonc',
+    ]
+
+    def test_no_hardcoded_script_paths_in_modules(self):
+        """waybar/modules/*.jsonc files must not hardcode ~/.config/waybar/scripts/."""
+        modules_dir = os.path.join(WAYBAR_DIR, 'modules')
+        hardcoded_re = re.compile(r'~/\.config/waybar/scripts/')
+
+        for filename in self.TELEMETRY_MODULES:
+            path = os.path.join(modules_dir, filename)
+            with open(path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            matches = hardcoded_re.findall(content)
+            self.assertEqual(
+                matches, [],
+                f'Hardcoded script path found in {filename}: {matches}',
+            )
+
+    def test_telemetry_modules_use_dynamic_resolution(self):
+        """Telemetry modules must dynamically resolve scripts via WAYBAR_SCRIPTS_DIR and relative paths."""
+        modules_dir = os.path.join(WAYBAR_DIR, 'modules')
+
+        for filename in self.TELEMETRY_MODULES:
+            path = os.path.join(modules_dir, filename)
+            with open(path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            self.assertIn('WAYBAR_SCRIPTS_DIR', content, f'{filename} does not reference WAYBAR_SCRIPTS_DIR')
+            self.assertIn('./scripts', content, f'{filename} does not check ./scripts')
+            self.assertIn('./waybar/scripts', content, f'{filename} does not check ./waybar/scripts')
+
+    def test_runner_script_exists_and_executable(self):
+        """waybar/scripts/runner.sh must exist, be executable, pass syntax checks, and execute scripts."""
+        runner_path = os.path.join(WAYBAR_DIR, 'scripts', 'runner.sh')
+        self.assertTrue(os.path.isfile(runner_path), f'Missing: {runner_path}')
+        self.assertTrue(os.access(runner_path, os.X_OK), f'{runner_path} is not executable')
+
+        import subprocess
+        rc = subprocess.run(['bash', '-n', runner_path], capture_output=True, text=True)
+        self.assertEqual(rc.returncode, 0, f'Syntax error in runner.sh:\n{rc.stderr}')
+
+
 if __name__ == '__main__':
     unittest.main()

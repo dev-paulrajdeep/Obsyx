@@ -1,6 +1,6 @@
 {
     "custom/media": {
-        "exec": "~/.config/waybar/scripts/media.sh",
+        "exec": "sh -c 'for d in \"$WAYBAR_SCRIPTS_DIR\" ./scripts ./waybar/scripts \"${XDG_CONFIG_HOME:-$HOME/.config}/waybar/scripts\"; do [ -n \"$d\" ] && [ -x \"$d/media.sh\" ] && exec \"$d/media.sh\" \"$@\"; done'",
         "return-type": "json",
 
         "interval": 1,
@@ -11,7 +11,7 @@
         "escape": true,
 
         "on-click": "playerctl play-pause",
-        "on-click-middle": "~/.config/waybar/scripts/media.sh --next-player",
+        "on-click-middle": "sh -c 'for d in \"$WAYBAR_SCRIPTS_DIR\" ./scripts ./waybar/scripts \"${XDG_CONFIG_HOME:-$HOME/.config}/waybar/scripts\"; do [ -n \"$d\" ] && [ -x \"$d/media.sh\" ] && exec \"$d/media.sh\" \"$@\"; done' _ --next-player",
         "on-click-right": "playerctl next",
         "on-scroll-up": "playerctl volume 0.05+",
         "on-scroll-down": "playerctl volume 0.05-",

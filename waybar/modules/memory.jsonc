@@ -1,6 +1,6 @@
 {
     "custom/memory": {
-        "exec": "~/.config/waybar/scripts/memoryinfo.sh",
+        "exec": "sh -c 'for d in \"$WAYBAR_SCRIPTS_DIR\" ./scripts ./waybar/scripts \"${XDG_CONFIG_HOME:-$HOME/.config}/waybar/scripts\"; do [ -n \"$d\" ] && [ -x \"$d/memoryinfo.sh\" ] && exec \"$d/memoryinfo.sh\" \"$@\"; done'",
         "return-type": "json",
 
         "interval": 2,

@@ -1,6 +1,6 @@
 {
     "custom/vpn": {
-        "exec": "~/.config/waybar/scripts/vpninfo.sh",
+        "exec": "sh -c 'for d in \"$WAYBAR_SCRIPTS_DIR\" ./scripts ./waybar/scripts \"${XDG_CONFIG_HOME:-$HOME/.config}/waybar/scripts\"; do [ -n \"$d\" ] && [ -x \"$d/vpninfo.sh\" ] && exec \"$d/vpninfo.sh\" \"$@\"; done'",
         "return-type": "json",
 
         "interval": 5,
