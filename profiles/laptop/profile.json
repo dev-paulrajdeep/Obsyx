@@ -1,0 +1,15 @@
+{
+  "name": "laptop",
+  "display_name": "Obsyx Laptop (Mobile & Battery Conservative)",
+  "form_factor": "laptop",
+  "description": "Optimized for mobile efficiency and battery life: reduced blur passes, shadows disabled, compact 32px Waybar, and power-saving telemetry.",
+  "features": {
+    "blur_passes": 1,
+    "blur_size": 4,
+    "shadows_enabled": false,
+    "vfr": true,
+    "vrr": 0,
+    "waybar_height": 32,
+    "power_saving_telemetry": true
+  }
+}

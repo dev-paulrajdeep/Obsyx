@@ -1,0 +1,10 @@
+/*──────────────────────────────────────────────
+ * Obsyx Waybar — Workstation Profile Stylesheet
+ * Full-fidelity styling with ambient padding and expanded telemetry
+ *──────────────────────────────────────────────*/
+
+@import "../../waybar/style.css";
+
+window#waybar {
+    font-size: 13px;
+}

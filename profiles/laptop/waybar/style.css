@@ -1,0 +1,35 @@
+/*──────────────────────────────────────────────
+ * Obsyx Waybar — Laptop Profile Stylesheet
+ * Compact padding and typography scaling for mobile screens
+ *──────────────────────────────────────────────*/
+
+@import "../../waybar/style.css";
+
+/* Compact window and module sizing */
+window#waybar {
+    font-size: 11px;
+}
+
+.modules-left,
+.modules-center,
+.modules-right {
+    padding: 0 4px;
+}
+
+#custom-launcher,
+#workspaces,
+#window,
+#clock,
+#custom-media,
+#custom-cpu,
+#custom-memory,
+#pulseaudio,
+#bluetooth,
+#battery,
+#custom-notifications,
+#custom-power {
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-top: 1px;
+    margin-bottom: 1px;
+}

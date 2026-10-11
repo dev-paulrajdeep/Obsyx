@@ -9,6 +9,7 @@ Usage:
 """
 
 import argparse
+from datetime import datetime
 import glob
 import json
 import os
@@ -905,6 +906,259 @@ def run_docgen(args) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Desktop Variants & Hardware Profiles (obsyx profile)
+# ---------------------------------------------------------------------------
+
+def load_profiles(repo_root: str) -> dict:
+    """Load metadata for all available profiles in profiles/ directory."""
+    profiles_dir = os.path.join(repo_root, "profiles")
+    if not os.path.exists(profiles_dir):
+        return {}
+
+    profiles = {}
+    for entry in sorted(os.listdir(profiles_dir)):
+        p_dir = os.path.join(profiles_dir, entry)
+        if not os.path.isdir(p_dir):
+            continue
+        meta_file = os.path.join(p_dir, "profile.json")
+        if os.path.isfile(meta_file):
+            try:
+                with open(meta_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    profiles[data.get("name", entry)] = data
+            except Exception:
+                pass
+    return profiles
+
+
+def get_active_profile(dest_root: str) -> str | None:
+    """Read currently active profile from destination directory."""
+    state_file = os.path.join(dest_root, ".obsyx_profile")
+    if os.path.isfile(state_file):
+        try:
+            with open(state_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data.get("active_profile")
+        except Exception:
+            pass
+    return None
+
+
+def run_profile_list(args, repo_root: str, dest_root: str, profiles: dict) -> int:
+    """List available profiles."""
+    active = get_active_profile(dest_root)
+    if getattr(args, "json", False):
+        output = {
+            "status": "ok",
+            "active_profile": active,
+            "destination": dest_root,
+            "profiles": list(profiles.values()),
+        }
+        print(json.dumps(output, indent=2))
+        return 0
+
+    print(bold(cyan("\n╭──────────────────────────────────────────────────────────╮")))
+    print(bold(cyan("│              Obsyx Desktop Hardware Profiles             │")))
+    print(bold(cyan("╰──────────────────────────────────────────────────────────╯\n")))
+    print(f"Target Destination: {bold(dest_root)}")
+    if active:
+        print(f"Active Profile:     {bold(green(active))}\n")
+    else:
+        print(f"Active Profile:     {dim('default (none applied)')}\n")
+
+    for p_name, p_data in sorted(profiles.items()):
+        is_act = (p_name == active)
+        badge = green("● ACTIVE") if is_act else dim("○")
+        print(f"  {badge:<12} {bold(p_name):<14} {p_data.get('display_name', '')}")
+        print(f"               {dim(p_data.get('description', ''))}")
+        feat_strs = []
+        for k, v in p_data.get("features", {}).items():
+            feat_strs.append(f"{k}: {v}")
+        if feat_strs:
+            print(f"               {dim('Features: ' + ', '.join(feat_strs))}")
+        print()
+
+    return 0
+
+
+def run_profile_show(args, repo_root: str, dest_root: str, profiles: dict) -> int:
+    """Show details for a specific profile."""
+    name = getattr(args, "name", None)
+    if not name or name not in profiles:
+        avail = ", ".join(sorted(profiles.keys()))
+        print(red(f"Error: Unknown profile '{name}'. Available: {avail}"), file=sys.stderr)
+        return 1
+
+    data = profiles[name]
+    if getattr(args, "json", False):
+        print(json.dumps(data, indent=2))
+        return 0
+
+    print(bold(cyan("\n╭──────────────────────────────────────────────────────────╮")))
+    print(bold(cyan(f"│ Profile: {data.get('display_name', name)[:47]:<47}│")))
+    print(bold(cyan("╰──────────────────────────────────────────────────────────╯\n")))
+    print(f"Name:        {bold(data.get('name', ''))}")
+    print(f"Form Factor: {bold(data.get('form_factor', ''))}")
+    print(f"Description: {data.get('description', '')}\n")
+    print(bold("Features & Tuning:"))
+    for k, v in data.get("features", {}).items():
+        val_str = green("yes") if v is True else (red("no") if v is False else bold(str(v)))
+        print(f"  • {k:<26} {val_str}")
+    print()
+    return 0
+
+
+def run_profile_apply(args, repo_root: str, dest_root: str, profiles: dict) -> int:
+    """Apply a hardware profile to target configuration."""
+    name = getattr(args, "name", None)
+    if not name or name not in profiles:
+        avail = ", ".join(sorted(profiles.keys()))
+        print(red(f"Error: Unknown profile '{name}'. Available: {avail}"), file=sys.stderr)
+        return 1
+
+    is_dry_run = getattr(args, "dry_run", False)
+    profile_dir = os.path.join(repo_root, "profiles", name)
+    p_meta = profiles[name]
+
+    hypr_src = os.path.join(profile_dir, "hypr", "profile.lua")
+    hypr_dest = os.path.join(dest_root, "hypr", "config", "profile.lua")
+    obsyx_profile_lua = os.path.join(dest_root, "obsyx", "profile.lua")
+
+    waybar_conf_src = os.path.join(profile_dir, "waybar", "config.jsonc")
+    waybar_conf_dest = os.path.join(dest_root, "waybar", "config.jsonc")
+
+    waybar_style_src = os.path.join(profile_dir, "waybar", "style.css")
+    waybar_style_dest = os.path.join(dest_root, "waybar", "profile-style.css")
+
+    state_dest = os.path.join(dest_root, ".obsyx_profile")
+
+    actions = [
+        {"target": hypr_dest, "source": hypr_src, "description": "Hyprland profile override"},
+        {"target": obsyx_profile_lua, "source": hypr_src, "description": "Obsyx XDG profile override"},
+        {"target": waybar_conf_dest, "source": waybar_conf_src, "description": "Waybar profile layout"},
+        {"target": waybar_style_dest, "source": waybar_style_src, "description": "Waybar profile stylesheet"},
+    ]
+
+    if not is_dry_run:
+        # If dest_root/waybar is a symlink directly pointing to the repository waybar dir,
+        # convert it into a directory of symlinks so profile overrides do not modify the repository.
+        dest_waybar = os.path.join(dest_root, "waybar")
+        repo_waybar = os.path.join(repo_root, "waybar")
+        if os.path.islink(dest_waybar) and os.path.realpath(dest_waybar) == os.path.realpath(repo_waybar):
+            os.unlink(dest_waybar)
+            os.makedirs(dest_waybar, exist_ok=True)
+            for item in os.listdir(repo_waybar):
+                os.symlink(os.path.join(repo_waybar, item), os.path.join(dest_waybar, item))
+
+        # Similarly for dest_root/hypr
+        dest_hypr = os.path.join(dest_root, "hypr")
+        repo_hypr = os.path.join(repo_root, "hypr")
+        if os.path.islink(dest_hypr) and os.path.realpath(dest_hypr) == os.path.realpath(repo_hypr):
+            os.unlink(dest_hypr)
+            os.makedirs(dest_hypr, exist_ok=True)
+            for item in os.listdir(repo_hypr):
+                os.symlink(os.path.join(repo_hypr, item), os.path.join(dest_hypr, item))
+
+        dest_config = os.path.join(dest_hypr, "config")
+        repo_config = os.path.join(repo_hypr, "config")
+        if os.path.islink(dest_config) and os.path.realpath(dest_config) == os.path.realpath(repo_config):
+            os.unlink(dest_config)
+            os.makedirs(dest_config, exist_ok=True)
+            for item in os.listdir(repo_config):
+                os.symlink(os.path.join(repo_config, item), os.path.join(dest_config, item))
+
+        os.makedirs(os.path.dirname(hypr_dest), exist_ok=True)
+        os.makedirs(os.path.dirname(obsyx_profile_lua), exist_ok=True)
+        os.makedirs(os.path.dirname(waybar_conf_dest), exist_ok=True)
+
+        if os.path.islink(hypr_dest):
+            os.unlink(hypr_dest)
+        shutil.copy2(hypr_src, hypr_dest)
+        shutil.copy2(hypr_src, obsyx_profile_lua)
+
+        if os.path.islink(waybar_conf_dest):
+            os.unlink(waybar_conf_dest)
+        elif os.path.isfile(waybar_conf_dest):
+            bak = f"{waybar_conf_dest}.bak"
+            if not os.path.exists(bak):
+                shutil.copy2(waybar_conf_dest, bak)
+
+        shutil.copy2(waybar_conf_src, waybar_conf_dest)
+
+        if os.path.islink(waybar_style_dest):
+            os.unlink(waybar_style_dest)
+        shutil.copy2(waybar_style_src, waybar_style_dest)
+
+
+        state_data = {
+            "active_profile": name,
+            "applied_at": datetime.now().isoformat(),
+            "features": p_meta.get("features", {}),
+        }
+        with open(state_dest, "w", encoding="utf-8") as f:
+            json.dump(state_data, f, indent=2)
+
+        if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+            try:
+                subprocess.run(["hyprctl", "reload"], capture_output=True, timeout=2)
+            except Exception:
+                pass
+        if shutil.which("pkill"):
+            try:
+                subprocess.run(["pkill", "-SIGUSR2", "waybar"], capture_output=True, timeout=2)
+            except Exception:
+                pass
+
+    if getattr(args, "json", False):
+        output = {
+            "status": "ok",
+            "profile": name,
+            "dry_run": is_dry_run,
+            "destination": dest_root,
+            "actions": actions,
+        }
+        print(json.dumps(output, indent=2))
+        return 0
+
+    title_suffix = " (DRY RUN SIMULATION)" if is_dry_run else ""
+    print(bold(cyan("\n╭──────────────────────────────────────────────────────────╮")))
+    print(bold(cyan(f"│           Obsyx Profile Switcher{title_suffix[:21]:<21}│")))
+    print(bold(cyan("╰──────────────────────────────────────────────────────────╯\n")))
+    if is_dry_run:
+        print(yellow(bold("⚡ DRY RUN: No modifications were made to the filesystem.\n")))
+
+    print(f"Target Destination: {bold(dest_root)}")
+    print(f"Applying Profile:   {bold(green(p_meta.get('display_name', name)))}\n")
+
+    for act in actions:
+        status_badge = yellow("○ SIMULATE") if is_dry_run else green("✔ APPLIED ")
+        print(f"  {status_badge} {bold(act['description']):<28} {act['target']}")
+
+    print()
+    if is_dry_run:
+        print(bold(yellow("Simulation complete. Run without --dry-run to apply changes.")))
+    else:
+        print(bold(green(f"✔ Successfully applied '{name}' profile! Desktop is tuned for {p_meta.get('form_factor', 'hardware')}.")))
+    print()
+    return 0
+
+
+def run_profile(args) -> int:
+    """Run profile subcommand."""
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    dest_root = os.path.abspath(getattr(args, "dest", None) or os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"))
+    profiles = load_profiles(repo_root)
+
+    action = getattr(args, "profile_action", None)
+    if action == "show":
+        return run_profile_show(args, repo_root, dest_root, profiles)
+    elif action == "apply":
+        return run_profile_apply(args, repo_root, dest_root, profiles)
+    else:
+        return run_profile_list(args, repo_root, dest_root, profiles)
+
+
+# ---------------------------------------------------------------------------
 # Main CLI Entrypoint
 # ---------------------------------------------------------------------------
 
@@ -948,6 +1202,30 @@ def main():
     docgen_parser.add_argument("--check", action="store_true", help="Check whether generated files are up to date without writing.")
     docgen_parser.add_argument("--json", action="store_true", help="Output keybindings data as JSON.")
 
+    # Profile
+    prof_parser = subparsers.add_parser("profile", help="Manage desktop hardware profiles (laptop, workstation).")
+    prof_parser.add_argument("--dest", "--target", dest="dest", help="Target configuration destination (default: ~/.config).")
+    prof_parser.add_argument("--json", action="store_true", help="Output profile list as JSON.")
+
+    prof_subparsers = prof_parser.add_subparsers(dest="profile_action", help="Profile actions (list, show, apply).")
+
+    # profile list
+    p_list = prof_subparsers.add_parser("list", help="List available desktop profiles.")
+    p_list.add_argument("--dest", "--target", dest="dest", help="Target configuration destination (default: ~/.config).")
+    p_list.add_argument("--json", action="store_true", help="Output profile list as JSON.")
+
+    # profile show
+    p_show = prof_subparsers.add_parser("show", help="Show profile details and feature matrix.")
+    p_show.add_argument("name", help="Profile name (e.g. laptop, workstation).")
+    p_show.add_argument("--json", action="store_true", help="Output profile details as JSON.")
+
+    # profile apply
+    p_apply = prof_subparsers.add_parser("apply", help="Apply a hardware profile to target configuration.")
+    p_apply.add_argument("name", help="Profile name to apply (e.g. laptop, workstation).")
+    p_apply.add_argument("--dest", "--target", dest="dest", help="Target configuration destination (default: ~/.config).")
+    p_apply.add_argument("--dry-run", action="store_true", help="Simulate applying profile without touching filesystem.")
+    p_apply.add_argument("--json", action="store_true", help="Output apply report as JSON.")
+
     args = parser.parse_args()
 
     if args.command == "doctor":
@@ -958,6 +1236,8 @@ def main():
         sys.exit(run_install(args))
     elif args.command == "docgen":
         sys.exit(run_docgen(args))
+    elif args.command == "profile":
+        sys.exit(run_profile(args))
     else:
         parser.print_help()
         sys.exit(1)

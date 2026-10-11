@@ -69,6 +69,25 @@ require("config.binds.media")
 require("config.binds.screenshots")
 
 --------------------------------------------------------------------------------
+-- Profile Specialization (Optional form-factor overrides)
+--------------------------------------------------------------------------------
+
+local ok_profile = pcall(require, "config.profile")
+if not ok_profile then
+    local xdg = os.getenv("XDG_CONFIG_HOME")
+    if not xdg or xdg == "" then
+        xdg = (os.getenv("HOME") or "") .. "/.config"
+    end
+    local prof_file = xdg .. "/obsyx/profile.lua"
+    local f = io.open(prof_file, "r")
+    if f then
+        f:close()
+        pcall(dofile, prof_file)
+    end
+end
+
+
+--------------------------------------------------------------------------------
 -- Runtime
 --------------------------------------------------------------------------------
 

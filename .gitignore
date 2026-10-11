@@ -28,3 +28,7 @@ tmp/
 __pycache__/
 *.pyc
 *.pyo
+
+# Obsyx Profile Overrides
+hypr/config/profile.lua
+.obsyx_profile

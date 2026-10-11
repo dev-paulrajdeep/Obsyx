@@ -109,3 +109,31 @@ Automated keybinding parser and documentation generator:
 # Output keybindings as JSON
 ./bin/obsyx docgen --json
 ```
+
+---
+
+### 5. `obsyx profile`
+
+Desktop hardware variants and form-factor specialization:
+- **`obsyx profile list`**: List available profiles and show currently active profile.
+- **`obsyx profile show <name>`**: Inspect detailed profile metadata and feature matrix.
+- **`obsyx profile apply <name>`**: Deploy profile overrides into target dotfiles with live compositor reload.
+  - **`--dry-run`**: Simulate profile application without touching disk.
+  - **`--dest PATH`**: Target destination override (defaults to `~/.config`).
+  - **`--json`**: Output machine-readable JSON report.
+
+#### Usage
+
+```bash
+# List profiles
+./bin/obsyx profile list
+
+# Show laptop profile tuning
+./bin/obsyx profile show laptop
+
+# Apply laptop profile to user environment
+./bin/obsyx profile apply laptop
+
+# Apply workstation profile to isolated sandbox
+./bin/obsyx profile apply workstation --dest /tmp/test-config
+```
