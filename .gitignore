@@ -32,3 +32,9 @@ __pycache__/
 # Obsyx Profile Overrides
 hypr/config/profile.lua
 .obsyx_profile
+
+# Obsyx User Overrides (Git-Clean Local Customization)
+user/*
+!user/README.md
+!user/*.example
+!user/.gitkeep

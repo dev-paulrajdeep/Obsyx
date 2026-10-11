@@ -60,4 +60,12 @@ if Registry and Registry.Theme then
     Registry.Theme.slug = theme_slug
 end
 
+-- Emit lifecycle hook if Plugins system is loaded
+local ok_plug, Plugins = pcall(require, "core.plugins")
+if ok_plug and Plugins and type(Plugins.emit) == "function" then
+    Plugins.emit("on_theme_change", loaded_theme, theme_name)
+elseif _G.Plugins and type(_G.Plugins.emit) == "function" then
+    _G.Plugins.emit("on_theme_change", loaded_theme, theme_name)
+end
+
 return loaded_theme
