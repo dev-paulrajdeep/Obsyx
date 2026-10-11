@@ -20,10 +20,17 @@ Obsyx uses a **canonical JSON token source** as the single source of truth for i
 | `rofi/clipboard.rasi` | Token-driven clipboard manager dialog theme |
 | `rofi/scripts/powermenu.sh` | Session management script (lock, suspend, logout, reboot, poweroff) |
 | `rofi/scripts/cliphist.sh` | Clipboard history script using `cliphist` and `wl-copy` |
+| `swaync/generated/theme-tokens.css` | Generated SwayNC GTK3 CSS tokens |
+| `swaync/config.json` | SwayNC notification daemon and control center layout configuration |
+| `swaync/style.css` | Token-driven SwayNC stylesheet with urgency states and widget styling |
+| `hypr/generated/theme-tokens.conf` | Generated Hyprland / Hyprlock configuration variables |
+| `hypr/hyprlock.conf` | Token-driven screen lock configuration with blurred screenshot and input field |
 | `tests/test_build_tokens.py` | Token compiler automated test suite |
 | `tests/test_theme_loader.py` | Theme loader and decoration wiring test suite |
 | `tests/test_waybar_tokens.py` | Waybar token integration and consistency test suite |
 | `tests/test_rofi_theme.py` | Rofi configuration, theme, and scripts test suite |
+| `tests/test_swaync_theme.py` | SwayNC configuration and stylesheet token test suite |
+| `tests/test_hyprlock_theme.py` | Hyprlock configuration and token test suite |
 
 ## Hyprland Theme Loader & Decoration
 
@@ -49,6 +56,21 @@ Rofi application launcher, power menu, and clipboard history are styled via gene
 2. `rofi/theme.rasi` imports `generated/theme-tokens.rasi` and applies Noctis Amethyst glass styling (`@noctis-surface-raised`, `@hairline-strong`, `@amethyst-fill`, `@amethyst-ink`).
 3. `rofi/scripts/powermenu.sh` and `rofi/scripts/cliphist.sh` invoke Rofi with dedicated modal themes (`rofi/powermenu.rasi` and `rofi/clipboard.rasi`) and are wired into `Registry.Desktop` and `Registry.Session`.
 
+## SwayNC Notification Daemon & Control Center
+
+SwayNC notification popups and control center are styled using compiled GTK3 tokens:
+
+1. `swaync/generated/theme-tokens.css` defines the canonical colors as `@define-color` rules.
+2. `swaync/style.css` imports `generated/theme-tokens.css` and styles `.control-center`, `.notification`, widgets, and urgency states (`.low`, `.normal`, `.critical`) with zero hardcoded hex values.
+3. `swaync/config.json` configures overlay dimensions, layout, margins, and widget list.
+
+## Hyprlock Screen Locker Integration
+
+Hyprlock screen locking is driven by compiled configuration variables:
+
+1. `hypr/generated/theme-tokens.conf` provides `$token = rgb(...)` / `rgba(...)` variables for palette, geometry, and blur parameters.
+2. `hypr/hyprlock.conf` sources `generated/theme-tokens.conf` to configure background live screenshot blurring (`$blur_passes`, `$blur_size`), time/date labels (`$amethyst_ink`, `$ink_default`), and the authentication input field (`$amethyst`, `$warning`, `$danger`).
+
 ## Running the compiler
 
 From the repository root:
@@ -64,7 +86,9 @@ python3 tools/build_tokens.py \
     --tokens core/tokens/noctis_amethyst.json \
     --lua-out hypr/themes/noctis_amethyst.lua \
     --css-out waybar/generated/theme-tokens.css \
-    --rofi-out rofi/generated/theme-tokens.rasi
+    --rofi-out rofi/generated/theme-tokens.rasi \
+    --swaync-out swaync/generated/theme-tokens.css \
+    --hypr-conf-out hypr/generated/theme-tokens.conf
 ```
 
 ## Running the tests
@@ -87,6 +111,8 @@ The compiler translates these to:
 | Hyprland Lua | `"#9b7ede"` | `"rgba(9B7EDE29)"` |
 | Waybar CSS | `#9b7ede` | `rgba(155, 126, 222, 0.16)` |
 | Rofi RASI | `#9b7ede` | `rgba(155, 126, 222, 0.16)` |
+| SwayNC CSS | `#9b7ede` | `rgba(155, 126, 222, 0.16)` |
+| Hypr Conf | `rgb(9b7ede)` | `rgba(9b7ede29)` |
 
 ## Adding a new token
 
