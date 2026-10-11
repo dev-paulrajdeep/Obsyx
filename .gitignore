@@ -19,6 +19,7 @@ luac.out
 
 # Build
 build/
+dist/
 
 # Temporary
 tmp/

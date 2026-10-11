@@ -34,8 +34,6 @@ hl.config({
 
     misc = {
 
-        vfr = true,
-
         vrr = 0,
 
     },
