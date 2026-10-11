@@ -14,7 +14,7 @@ This roadmap covers two related but distinct products:
 - **Obsyx Desktop:** a modular, configurable desktop framework built around Hyprland, Lua, and a cohesive ecosystem of Wayland tools.
 - **Obsyx OS:** a bootable, installable **Arch-based Linux distribution** that integrates Obsyx Desktop with the base operating system, hardware support, installation, updates, security, and recovery.
 
-> **Current status:** Phase 1 of the desktop framework is marked complete in this roadmap. The remaining desktop phases are still tracked below. **Distro-specific engineering has not started** and is planned as a separate workstream; completing dotfiles alone does not produce an operating system.
+> **Current status:** Obsyx v0.1.0 has completed **Phase 1 (Foundation)** and delivered core milestones across **Phases 2 through 6** (Design Token Engine, Noctis Amethyst reference theme, Desktop Components, Obsyx CLI tooling, Hardware Profiles, Plugin Architecture, and Arch/CI packaging). The remaining desktop framework items and subsequent phases are actively tracked below. **Distro-specific engineering (Phases 8–13)** has not started and is planned as a separate workstream; completing dotfiles alone does not produce an operating system.
 
 ## Scope Boundary — Desktop Framework vs Operating System
 
@@ -85,76 +85,76 @@ Obsyx OS additionally needs the system layers that dotfiles do not provide:
 
 ## Status Bar
 
-- [ ] Modular Waybar architecture
-- [ ] Workspace indicators
-- [ ] Active window title
-- [ ] Media controls
-- [ ] Volume widget
+- [x] Modular Waybar architecture
+- [x] Workspace indicators
+- [x] Active window title
+- [x] Media controls
+- [x] Volume widget
 - [ ] Brightness widget
-- [ ] Battery widget
-- [ ] Network widget
-- [ ] Bluetooth widget
-- [ ] VPN widget
-- [ ] CPU monitor
-- [ ] RAM monitor
-- [ ] GPU monitor
-- [ ] Temperature monitor
-- [ ] Clock
-- [ ] Calendar popup
-- [ ] System tray
+- [x] Battery widget
+- [x] Network widget
+- [x] Bluetooth widget
+- [x] VPN widget
+- [x] CPU monitor
+- [x] RAM monitor
+- [x] GPU monitor
+- [x] Temperature monitor
+- [x] Clock
+- [x] Calendar popup
+- [x] System tray
 
 ## Launcher
 
-- [ ] Application launcher
-- [ ] File launcher
-- [ ] Power menu
+- [x] Application launcher
+- [x] File launcher
+- [x] Power menu
 - [ ] Calculator mode
-- [ ] Clipboard browser
+- [x] Clipboard browser
 - [ ] Emoji picker
-- [ ] Theme-aware styling
-- [ ] Icon support
-- [ ] Blur integration
+- [x] Theme-aware styling
+- [x] Icon support
+- [x] Blur integration
 
 ## Notifications
 
-- [ ] Notification center
-- [ ] Control center
+- [x] Notification center
+- [x] Control center
 - [ ] Volume OSD
 - [ ] Brightness OSD
 - [ ] Screenshot preview
 
 ## Lock Screen
 
-- [ ] Custom lock screen
-- [ ] Background blur
+- [x] Custom lock screen
+- [x] Background blur
 - [ ] Media widget
-- [ ] User profile
-- [ ] Time & date
+- [x] User profile
+- [x] Time & date
 - [ ] Battery indicator
 - [ ] Idle integration
 
 ## Logout Menu
 
-- [ ] Themed logout interface
-- [ ] Animated transitions
+- [x] Themed logout interface
+- [x] Animated transitions
 - [ ] Icon redesign
 
 ## Wallpaper Engine
 
-- [ ] Wallpaper daemon integration
-- [ ] Automatic preload
-- [ ] Wallpaper cache
-- [ ] Multi-monitor support
-- [ ] Dynamic wallpaper switching
+- [x] Wallpaper daemon integration
+- [x] Automatic preload
+- [x] Wallpaper cache
+- [x] Multi-monitor support
+- [x] Dynamic wallpaper switching
 
 ## Desktop Theme
 
 - [ ] GTK theme
 - [ ] Qt theme
-- [ ] Cursor theme
-- [ ] Icon theme
-- [ ] Font stack
-- [ ] Terminal theme
+- [x] Cursor theme
+- [x] Icon theme
+- [x] Font stack
+- [x] Terminal theme
 - [ ] VS Code theme
 - [ ] Browser theme
 
@@ -166,47 +166,47 @@ Obsyx OS additionally needs the system layers that dotfiles do not provide:
 
 ## Theme Engine
 
-- [ ] Theme registry
-- [ ] Theme loader
-- [ ] Theme metadata
+- [x] Theme registry
+- [x] Theme loader
+- [x] Theme metadata
 - [ ] Theme inheritance
-- [ ] Theme validation
+- [x] Theme validation
 
 ## Design Tokens
 
-- [ ] Color tokens
-- [ ] Accent palette
-- [ ] Surface colors
-- [ ] Typography tokens
-- [ ] Radius tokens
-- [ ] Blur tokens
-- [ ] Shadow tokens
-- [ ] Animation tokens
-- [ ] Opacity tokens
-- [ ] Spacing tokens
+- [x] Color tokens
+- [x] Accent palette
+- [x] Surface colors
+- [x] Typography tokens
+- [x] Radius tokens
+- [x] Blur tokens
+- [x] Shadow tokens
+- [x] Animation tokens
+- [x] Opacity tokens
+- [x] Spacing tokens
 
 ## Component Library
 
-- [ ] Window styling
-- [ ] Panel styling
-- [ ] Menu styling
-- [ ] Notification styling
-- [ ] Dialog styling
-- [ ] Widget styling
-- [ ] Overlay styling
+- [x] Window styling
+- [x] Panel styling
+- [x] Menu styling
+- [x] Notification styling
+- [x] Dialog styling
+- [x] Widget styling
+- [x] Overlay styling
 
 ## Motion System
 
-- [ ] Shared animation presets
-- [ ] Shared bezier curves
-- [ ] Shared spring physics
-- [ ] Transition library
+- [x] Shared animation presets
+- [x] Shared bezier curves
+- [x] Shared spring physics
+- [x] Transition library
 
 ## Official Themes
 
 Obsyx ships with **Noctis Amethyst** as its default reference theme. Future official themes will build upon the same architecture and design system.
 
-- [ ] Noctis Amethyst *(Reference Theme)*
+- [x] Noctis Amethyst *(Reference Theme)*
 - [ ] Obsidian
 - [ ] Frost
 - [ ] Aurora
@@ -221,35 +221,37 @@ Obsyx ships with **Noctis Amethyst** as its default reference theme. Future offi
 ## Installer
 
 - [ ] Interactive installer
-- [ ] Minimal installation
-- [ ] Full installation
-- [ ] Package detection
-- [ ] Existing configuration backup
+- [x] Minimal installation
+- [x] Full installation
+- [x] Package detection
+- [x] Existing configuration backup
 
 ## Tooling
 
-- [ ] Dependency checker
-- [ ] Configuration validator
-- [ ] Theme validator
-- [ ] Health diagnostics
-- [ ] System compatibility checker
+- [x] Dependency checker
+- [x] Configuration validator
+- [x] Theme validator
+- [x] Health diagnostics
+- [x] System compatibility checker
 
 ## Command Line Interface
 
-- [ ] `obsyx install`
+- [x] `obsyx install`
 - [ ] `obsyx update`
-- [ ] `obsyx doctor`
+- [x] `obsyx doctor`
 - [ ] `obsyx theme`
-- [ ] `obsyx backup`
+- [ ] `obsyx backup` *(built-in automated backups in `obsyx install`)*
 - [ ] `obsyx restore`
+- [x] `obsyx docgen` *(Keybindings cheatsheet & Rofi launcher generator)*
+- [x] `obsyx profile` *(Hardware profile switcher)*
 
 ## Documentation
 
-- [ ] Architecture guide
-- [ ] Configuration reference
-- [ ] Theme development guide
-- [ ] Plugin guide
-- [ ] Lua API documentation
+- [x] Architecture guide
+- [x] Configuration reference
+- [x] Theme development guide
+- [x] Plugin guide
+- [x] Lua API documentation
 - [ ] Screenshots
 - [ ] GIF demonstrations
 
@@ -261,34 +263,34 @@ Obsyx ships with **Noctis Amethyst** as its default reference theme. Future offi
 
 ## Plugin Framework
 
-- [ ] Plugin loader
-- [ ] Plugin registry
-- [ ] Plugin lifecycle
-- [ ] Event hooks
+- [x] Plugin loader
+- [x] Plugin registry
+- [x] Plugin lifecycle
+- [x] Event hooks
 - [ ] Permission model
 
 ## APIs
 
-- [ ] Theme API
-- [ ] Widget API
-- [ ] Animation API
-- [ ] Layout API
-- [ ] Rule API
+- [x] Theme API
+- [x] Widget API
+- [x] Animation API
+- [x] Layout API
+- [x] Rule API
 
 ## Widgets
 
 - [ ] Dashboard widgets
 - [ ] Weather widget
-- [ ] Music widget
-- [ ] Calendar widget
+- [x] Music widget
+- [x] Calendar widget
 - [ ] Notes widget
-- [ ] System monitor widget
+- [x] System monitor widget
 
 ## Extensions
 
 - [ ] Third-party plugins
 - [ ] Community widgets
-- [ ] Optional desktop modules
+- [x] Optional desktop modules
 
 ---
 
@@ -298,27 +300,27 @@ Obsyx ships with **Noctis Amethyst** as its default reference theme. Future offi
 
 ## Packaging
 
-- [ ] PKGBUILD
-- [ ] AUR package
-- [ ] Binary releases
-- [ ] Semantic versioning
-- [ ] Release notes
+- [x] PKGBUILD
+- [x] AUR package
+- [x] Binary releases
+- [x] Semantic versioning
+- [x] Release notes
 
 ## Automation
 
-- [ ] GitHub Actions
-- [ ] Lua linting
-- [ ] Code formatting
-- [ ] Build verification
-- [ ] Dependency validation
+- [x] GitHub Actions
+- [x] Lua linting
+- [x] Code formatting
+- [x] Build verification
+- [x] Dependency validation
 - [ ] Automatic screenshots
 - [ ] Documentation deployment
 
 ## Quality Assurance
 
-- [ ] Configuration regression tests
-- [ ] Theme validation tests
-- [ ] Startup verification
+- [x] Configuration regression tests
+- [x] Theme validation tests
+- [x] Startup verification
 - [ ] Performance benchmarks
 - [ ] Memory profiling
 
@@ -598,7 +600,7 @@ These ideas are intentionally outside the initial OS release scope. Revisit them
 - Automatic day/night themes
 - Workspace templates
 - Session restoration
-- Desktop profiles
+- Desktop profiles *(Shipped in v0.1.0: laptop & workstation profiles with live switching)*
 - Remote synchronization
 - Cloud backup
 - Mobile companion application
