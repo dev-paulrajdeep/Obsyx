@@ -11,14 +11,14 @@ local MOD = "SUPER"
 
 local Applications = {
 
-    { "Return", Registry.Apps.terminal      },
-    { "Space",  Registry.Desktop.launcher   },
-    { "B",      Registry.Apps.browser       },
-    { "E",      Registry.Apps.fileManager   },
-    { "L",      Registry.Desktop.lock       },
-    { "C",      Registry.Apps.editor        },
-    { "M",      Registry.Apps.musicPlayer   },
-    { "V",      Registry.Desktop.clipboard  },
+    { "Return", Registry.Apps.terminal,     "Terminal Emulator" },
+    { "Space",  Registry.Desktop.launcher,  "Application Launcher" },
+    { "B",      Registry.Apps.browser,      "Web Browser" },
+    { "E",      Registry.Apps.fileManager,  "File Manager" },
+    { "L",      Registry.Desktop.lock,      "Lock Screen" },
+    { "C",      Registry.Apps.editor,       "Code Editor" },
+    { "M",      Registry.Apps.musicPlayer,  "Music Player" },
+    { "V",      Registry.Desktop.clipboard, "Clipboard History" },
    
 }
 
@@ -30,7 +30,10 @@ for _, app in ipairs(Applications) do
 
     hl.bind(
         MOD .. " + " .. app[1],
-        hl.dsp.exec_cmd(app[2])
+        hl.dsp.exec_cmd(app[2]),
+        {
+            description = app[3],
+        }
     )
 
 end

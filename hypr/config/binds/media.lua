@@ -11,13 +11,13 @@
 
 local Repeating = {
 
-    { "XF86AudioRaiseVolume", Registry.Media.volumeUp       },
-    { "XF86AudioLowerVolume", Registry.Media.volumeDown     },
-    { "XF86AudioMute",        Registry.Media.volumeMute     },
-    { "XF86AudioMicMute",     Registry.Media.microphoneMute },
+    { "XF86AudioRaiseVolume", Registry.Media.volumeUp,       "Volume Up" },
+    { "XF86AudioLowerVolume", Registry.Media.volumeDown,     "Volume Down" },
+    { "XF86AudioMute",        Registry.Media.volumeMute,     "Toggle Volume Mute" },
+    { "XF86AudioMicMute",     Registry.Media.microphoneMute, "Toggle Mic Mute" },
 
-    { "XF86MonBrightnessUp",   Registry.Media.brightnessUp   },
-    { "XF86MonBrightnessDown", Registry.Media.brightnessDown },
+    { "XF86MonBrightnessUp",   Registry.Media.brightnessUp,   "Brightness Up" },
+    { "XF86MonBrightnessDown", Registry.Media.brightnessDown, "Brightness Down" },
 
 }
 
@@ -27,10 +27,10 @@ local Repeating = {
 
 local Playback = {
 
-    { "XF86AudioNext",  Registry.Media.next       },
-    { "XF86AudioPrev",  Registry.Media.previous   },
-    { "XF86AudioPause", Registry.Media.playPause  },
-    { "XF86AudioPlay",  Registry.Media.playPause  },
+    { "XF86AudioNext",  Registry.Media.next,      "Next Track" },
+    { "XF86AudioPrev",  Registry.Media.previous,  "Previous Track" },
+    { "XF86AudioPause", Registry.Media.playPause, "Toggle Play/Pause" },
+    { "XF86AudioPlay",  Registry.Media.playPause, "Toggle Play/Pause" },
 
 }
 
@@ -51,6 +51,8 @@ for _, bind in ipairs(Repeating) do
             locked = true,
 
             repeating = true,
+
+            description = bind[3],
 
         }
 
@@ -73,6 +75,8 @@ for _, bind in ipairs(Playback) do
         {
 
             locked = true,
+
+            description = bind[3],
 
         }
 

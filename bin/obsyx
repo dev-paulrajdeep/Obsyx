@@ -539,6 +539,372 @@ def run_install(args) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Keybinding Parser & Documentation Generator (docgen)
+# ---------------------------------------------------------------------------
+
+LUA_DOCGEN_EXTRACTOR = r"""
+package.path = "./hypr/?.lua;./hypr/?/init.lua;" .. package.path
+
+local function make_mock(name)
+    name = name or "dsp"
+    local t = {}
+    local mt = {
+        __index = function(self, key)
+            local sub = make_mock(name .. "." .. tostring(key))
+            rawset(self, key, sub)
+            return sub
+        end,
+        __call = function(self, ...)
+            local args = {...}
+            local arg_strs = {}
+            for i, a in ipairs(args) do
+                if type(a) == "table" then
+                    local parts = {}
+                    for k, v in pairs(a) do table.insert(parts, tostring(k) .. "=" .. tostring(v)) end
+                    table.insert(arg_strs, "{" .. table.concat(parts, ", ") .. "}")
+                else
+                    table.insert(arg_strs, tostring(a))
+                end
+            end
+            if name == "dsp.exec_cmd" and #args > 0 then
+                return tostring(args[1])
+            end
+            return name .. "(" .. table.concat(arg_strs, ", ") .. ")"
+        end,
+        __tostring = function(self) return name end
+    }
+    setmetatable(t, mt)
+    return t
+end
+
+local all_binds = {}
+local current_cat = "General"
+local current_file = ""
+
+_G.hl = {
+    bind = function(key, action, opts)
+        opts = opts or {}
+        local act_str = tostring(action)
+        local desc = opts.description
+        if not desc or desc == "" then
+            desc = act_str
+        end
+        table.insert(all_binds, {
+            key = tostring(key),
+            description = tostring(desc),
+            action = act_str,
+            category = current_cat,
+            source_file = current_file,
+            locked = opts.locked == true,
+            repeating = opts.repeating == true,
+            mouse = opts.mouse == true,
+        })
+    end,
+    dsp = make_mock("dsp")
+}
+
+require("config.variables")
+
+local modules = {
+    { mod = "config.binds.apps", cat = "Applications & Launchers", file = "hypr/config/binds/apps.lua" },
+    { mod = "config.binds.windows", cat = "Window Management", file = "hypr/config/binds/windows.lua" },
+    { mod = "config.binds.workspaces", cat = "Workspace Navigation", file = "hypr/config/binds/workspaces.lua" },
+    { mod = "config.binds.screenshots", cat = "Screenshots", file = "hypr/config/binds/screenshots.lua" },
+    { mod = "config.binds.media", cat = "Media & Hardware Controls", file = "hypr/config/binds/media.lua" },
+    { mod = "config.binds.system", cat = "System & Session Controls", file = "hypr/config/binds/system.lua" },
+}
+
+for _, m in ipairs(modules) do
+    current_cat = m.cat
+    current_file = m.file
+    local ok, err = pcall(require, m.mod)
+    if not ok then
+        io.stderr:write("Error loading " .. m.mod .. ": " .. tostring(err) .. "\n")
+    end
+end
+
+local function jstr(s)
+    s = tostring(s or "")
+    s = s:gsub("\\", "\\\\"):gsub("\"", "\\\""):gsub("\n", "\\n"):gsub("\r", "\\r")
+    return "\"" .. s .. "\""
+end
+
+local items = {}
+for _, b in ipairs(all_binds) do
+    local obj = string.format(
+        "{\"key\": %s, \"description\": %s, \"action\": %s, \"category\": %s, \"source_file\": %s, \"locked\": %s, \"repeating\": %s, \"mouse\": %s}",
+        jstr(b.key), jstr(b.description), jstr(b.action), jstr(b.category), jstr(b.source_file),
+        tostring(b.locked), tostring(b.repeating), tostring(b.mouse)
+    )
+    table.insert(items, obj)
+end
+
+print("{\"total\": " .. #items .. ", \"binds\": [" .. table.concat(items, ",") .. "]}")
+"""
+
+
+def extract_keybindings(repo_root: str) -> list:
+    """Extract all active keybindings from Hyprland Lua configuration."""
+    if shutil.which("lua"):
+        try:
+            proc = subprocess.run(
+                ["lua", "-e", LUA_DOCGEN_EXTRACTOR],
+                capture_output=True,
+                text=True,
+                cwd=repo_root,
+                timeout=5,
+            )
+            if proc.returncode == 0 and proc.stdout.strip():
+                data = json.loads(proc.stdout)
+                if "binds" in data and len(data["binds"]) > 0:
+                    return data["binds"]
+        except Exception:
+            pass
+
+    # Static fallback if lua runtime is not available
+    binds = []
+    binds_dir = os.path.join(repo_root, "hypr", "config", "binds")
+    if not os.path.exists(binds_dir):
+        return binds
+
+    apps_file = os.path.join(binds_dir, "apps.lua")
+    if os.path.exists(apps_file):
+        with open(apps_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        for match in re.finditer(r'\{\s*"([^"]+)"\s*,\s*([^,\s]+)\s*(?:,\s*"([^"]+)")?\s*\}', content):
+            key = f"SUPER + {match.group(1)}"
+            cmd = match.group(2)
+            desc = match.group(3) or cmd
+            binds.append({
+                "key": key,
+                "description": desc,
+                "action": cmd,
+                "category": "Applications & Launchers",
+                "source_file": "hypr/config/binds/apps.lua",
+                "locked": False,
+                "repeating": False,
+                "mouse": False,
+            })
+
+    return binds
+
+
+def generate_markdown(binds: list) -> str:
+    """Generate GFM markdown cheatsheet for keybindings."""
+    lines = [
+        "# Obsyx Keybindings Cheatsheet",
+        "",
+        "> **Environment:** Hyprland + Noctis Amethyst<br/>",
+        "> **Modifier Key (`MOD`):** `SUPER` (Windows / Command key)<br/>",
+        "> **Source Configurations:** `hypr/config/binds/*.lua` and `hypr/config/variables.lua`<br/>",
+        "> *Note: Automatically generated by `obsyx docgen`.*",
+        "",
+        "---",
+        "",
+        "## Categories Overview",
+        "",
+        "| Category | Shortcuts | Description |",
+        "| :--- | :---: | :--- |",
+    ]
+
+    cats = {}
+    cat_order = [
+        "Applications & Launchers",
+        "Window Management",
+        "Workspace Navigation",
+        "Screenshots",
+        "Media & Hardware Controls",
+        "System & Session Controls",
+    ]
+    for b in binds:
+        cat = b.get("category", "General")
+        cats.setdefault(cat, []).append(b)
+
+    cat_descs = {
+        "Applications & Launchers": "Core applications, terminal, browser, and desktop launcher",
+        "Window Management": "Window tiling, floating, fullscreen, layout split, focus, and drag/resize",
+        "Workspace Navigation": "Workspaces 1-10, scratchpads, and active window movement",
+        "Screenshots": "Screen, window, and region captures via hyprshot",
+        "Media & Hardware Controls": "Audio volume, microphone mute, monitor brightness, and media playback",
+        "System & Session Controls": "Session lock, power menu, logout, suspend, reboot, and power off",
+    }
+
+    for cat in cat_order:
+        if cat in cats:
+            count = len(cats[cat])
+            desc = cat_descs.get(cat, "")
+            slug = cat.lower().replace(" & ", "-").replace(" ", "-")
+            lines.append(f"| [{cat}](#{slug}) | {count} | {desc} |")
+
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+
+    def format_key_kbd(key_str: str) -> str:
+        parts = [p.strip() for p in key_str.split("+")]
+        return " + ".join(f"<kbd>{p}</kbd>" for p in parts)
+
+    for cat in cat_order:
+        if cat not in cats:
+            continue
+        c_binds = cats[cat]
+        lines.append(f"## {cat}")
+        lines.append("")
+        lines.append("| Shortcut | Description | Action / Command |")
+        lines.append("| :--- | :--- | :--- |")
+        for b in c_binds:
+            kbd_str = format_key_kbd(b["key"])
+            desc = b.get("description", "").replace("|", "\\|")
+            act = b.get("action", "").replace("|", "\\|")
+            lines.append(f"| {kbd_str} | {desc} | `{act}` |")
+        lines.append("")
+
+    return "\n".join(lines).strip() + "\n"
+
+
+def generate_rofi_script(binds: list) -> str:
+    """Generate interactive Rofi keybinding search script."""
+    entries_code = []
+    actions_code = []
+
+    for b in binds:
+        key = b["key"]
+        desc = b.get("description", "")
+        cat = b.get("category", "")
+        act = b.get("action", "")
+
+        entry_line = f"{key:<26} │ {desc:<28} │ {cat}"
+        escaped_entry = entry_line.replace('"', '\\"')
+        escaped_action = act.replace('"', '\\"')
+
+        entries_code.append(f'    "{escaped_entry}"')
+        actions_code.append(f'    "{escaped_action}"')
+
+    entries_block = "\n".join(entries_code)
+    actions_block = "\n".join(actions_code)
+
+    script = f"""#!/usr/bin/env bash
+# Obsyx - Interactive Keybinding Search & Launcher
+# Search all configured shortcuts and optionally execute their action.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${{BASH_SOURCE[0]}}")" && pwd)"
+ROFI_DIR="$(cd "${{SCRIPT_DIR}}/.." && pwd)"
+THEME="${{ROFI_DIR}}/app-launcher.rasi"
+
+if ! command -v rofi >/dev/null 2>&1; then
+    echo "Error: rofi is not installed or not in PATH" >&2
+    exit 1
+fi
+
+ROFI_ARGS=(-i -p "Shortcuts" -format i)
+if [[ -f "${{THEME}}" ]]; then
+    ROFI_ARGS+=(-theme "${{THEME}}")
+fi
+
+declare -a ENTRIES=(
+{entries_block}
+)
+
+declare -a ACTIONS=(
+{actions_block}
+)
+
+# Render menu and capture selection index
+INDEX="$(printf "%s\\n" "${{ENTRIES[@]}}" | rofi -dmenu "${{ROFI_ARGS[@]}}" || true)"
+
+if [[ -z "${{INDEX}}" ]]; then
+    exit 0
+fi
+
+ACTION="${{ACTIONS[INDEX]:-}}"
+if [[ -z "${{ACTION}}" ]]; then
+    exit 0
+fi
+
+# Dispatch or execute action
+if [[ "${{ACTION}}" == dsp.* ]]; then
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "Obsyx Keybinding" "${{ENTRIES[INDEX]}}"
+    fi
+else
+    # Shell command execution
+    eval "${{ACTION}} &"
+fi
+"""
+    return script.strip() + "\n"
+
+
+def run_docgen(args) -> int:
+    """Run docgen subcommand."""
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    binds = extract_keybindings(repo_root)
+
+    if getattr(args, "json", False):
+        cats = sorted(list({b["category"] for b in binds}))
+        output = {
+            "status": "ok",
+            "total": len(binds),
+            "categories": cats,
+            "keybindings": binds,
+        }
+        print(json.dumps(output, indent=2))
+        return 0
+
+    target_md = getattr(args, "output", None) or os.path.join(repo_root, "KEYBINDINGS.md")
+    target_rofi = getattr(args, "rofi_script", None) or os.path.join(repo_root, "rofi", "scripts", "keybindings.sh")
+
+    new_md_content = generate_markdown(binds)
+    new_rofi_content = generate_rofi_script(binds)
+
+    is_check = getattr(args, "check", False)
+
+    if is_check:
+        mismatched = []
+        if not os.path.exists(target_md):
+            mismatched.append(f"Missing {target_md}")
+        else:
+            with open(target_md, "r", encoding="utf-8") as f:
+                if f.read() != new_md_content:
+                    mismatched.append(f"Outdated {target_md}")
+
+        if not os.path.exists(target_rofi):
+            mismatched.append(f"Missing {target_rofi}")
+        else:
+            with open(target_rofi, "r", encoding="utf-8") as f:
+                if f.read() != new_rofi_content:
+                    mismatched.append(f"Outdated {target_rofi}")
+
+        if mismatched:
+            print(red(f"✘ Documentation check failed: {', '.join(mismatched)}"))
+            return 1
+        print(green("✔ Documentation check passed: All cheatsheets are up to date."))
+        return 0
+
+    # Write output files
+    os.makedirs(os.path.dirname(os.path.abspath(target_md)), exist_ok=True)
+    with open(target_md, "w", encoding="utf-8") as f:
+        f.write(new_md_content)
+
+    os.makedirs(os.path.dirname(os.path.abspath(target_rofi)), exist_ok=True)
+    with open(target_rofi, "w", encoding="utf-8") as f:
+        f.write(new_rofi_content)
+    os.chmod(target_rofi, 0o755)
+
+    num_cats = len({b["category"] for b in binds})
+    print(bold(cyan("\n╭──────────────────────────────────────────────────────────╮")))
+    print(bold(cyan("│           Obsyx Keybinding Cheatsheet Generator          │")))
+    print(bold(cyan("╰──────────────────────────────────────────────────────────╯\n")))
+    print(f"Extracted {bold(str(len(binds)))} keybindings across {bold(str(num_cats))} categories.\n")
+    print(f"  {green('✔ GENERATED')} {bold('KEYBINDINGS.md')}       -> {target_md}")
+    print(f"  {green('✔ GENERATED')} {bold('keybindings.sh')}        -> {target_rofi}")
+    print()
+
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Main CLI Entrypoint
 # ---------------------------------------------------------------------------
 
@@ -575,6 +941,13 @@ def main():
     ins_parser.add_argument("--skip", "-s", help="Comma-separated components to skip.")
     ins_parser.add_argument("--json", action="store_true", help="Output installation plan/result as JSON.")
 
+    # Docgen
+    docgen_parser = subparsers.add_parser("docgen", help="Generate keybindings cheatsheet (KEYBINDINGS.md) and Rofi search script.")
+    docgen_parser.add_argument("--output", "-o", help="Target markdown cheatsheet output path (default: KEYBINDINGS.md).")
+    docgen_parser.add_argument("--rofi-script", "-r", help="Target Rofi search script output path (default: rofi/scripts/keybindings.sh).")
+    docgen_parser.add_argument("--check", action="store_true", help="Check whether generated files are up to date without writing.")
+    docgen_parser.add_argument("--json", action="store_true", help="Output keybindings data as JSON.")
+
     args = parser.parse_args()
 
     if args.command == "doctor":
@@ -583,6 +956,8 @@ def main():
         sys.exit(run_validate(args))
     elif args.command == "install":
         sys.exit(run_install(args))
+    elif args.command == "docgen":
+        sys.exit(run_docgen(args))
     else:
         parser.print_help()
         sys.exit(1)

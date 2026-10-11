@@ -86,3 +86,26 @@ Safely deploys Obsyx configuration components into target user dotfiles director
 # Isolated sandbox deployment
 ./bin/obsyx install --dest /tmp/test-config
 ```
+
+---
+
+### 4. `obsyx docgen`
+
+Automated keybinding parser and documentation generator:
+- **`--output PATH`** (`-o`): Target markdown cheatsheet path (defaults to `KEYBINDINGS.md`).
+- **`--rofi-script PATH`** (`-r`): Target interactive Rofi search script path (defaults to `rofi/scripts/keybindings.sh`).
+- **`--check`**: Verify that generated cheatsheet and script files match active configuration without overwriting (exit code `0` if up to date, `1` if outdated).
+- **`--json`**: Emit machine-readable JSON structure of all parsed categories and keybindings.
+
+#### Usage
+
+```bash
+# Generate KEYBINDINGS.md and rofi/scripts/keybindings.sh
+./bin/obsyx docgen
+
+# Verify documentation matches configuration
+./bin/obsyx docgen --check
+
+# Output keybindings as JSON
+./bin/obsyx docgen --json
+```

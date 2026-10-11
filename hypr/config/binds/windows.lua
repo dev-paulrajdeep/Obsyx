@@ -13,12 +13,13 @@ local MOD = "SUPER"
 
 local Directions = {
 
-    left  = "left",
-    right = "right",
-    up    = "up",
-    down  = "down",
+    { "left",  "left" },
+    { "down",  "down" },
+    { "up",    "up" },
+    { "right", "right" },
 
 }
+
 
 --------------------------------------------------------------------------------
 -- Window Actions
@@ -124,7 +125,9 @@ hl.bind(
 -- Focus
 --------------------------------------------------------------------------------
 
-for key, direction in pairs(Directions) do
+for _, item in ipairs(Directions) do
+
+    local key, direction = item[1], item[2]
 
     hl.bind(
 
