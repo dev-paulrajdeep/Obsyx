@@ -1,0 +1,425 @@
+#!/usr/bin/env python3
+"""Obsyx CLI Core & Diagnostic Validator.
+
+Usage:
+    obsyx --version
+    obsyx --help
+    obsyx doctor [--json] [--verbose]
+    obsyx validate [--path PATH] [--json] [--verbose]
+"""
+
+import argparse
+import glob
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+
+VERSION = "0.1.0"
+
+# ANSI Terminal Colors
+USE_COLOR = sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
+
+def _c(code: str, text: str) -> str:
+    return f"\033[{code}m{text}\033[0m" if USE_COLOR else text
+
+def bold(text: str) -> str: return _c("1", text)
+def green(text: str) -> str: return _c("32", text)
+def yellow(text: str) -> str: return _c("33", text)
+def red(text: str) -> str: return _c("31", text)
+def cyan(text: str) -> str: return _c("36", text)
+def dim(text: str) -> str: return _c("2", text)
+
+
+def _strip_jsonc_comments(text: str) -> str:
+    """Remove single-line (//) and multi-line (/* */) comments from JSONC text."""
+    pattern = re.compile(
+        r'//.*?$|/\*.*?\*/|"(?:\\.|[^\\"])*"',
+        re.DOTALL | re.MULTILINE,
+    )
+    def replacer(match):
+        s = match.group(0)
+        return ' ' if s.startswith('/') else s
+    return re.sub(pattern, replacer, text)
+
+
+# ---------------------------------------------------------------------------
+# Doctor Command
+# ---------------------------------------------------------------------------
+
+def run_doctor(args) -> int:
+    """Check system dependencies and desktop runtime tooling."""
+    checks = []
+
+    # Category definitions
+    required_bins = [
+        ("Hyprland", ["hyprland", "Hyprland"], "Compositor binary"),
+        ("Waybar", ["waybar"], "Status bar"),
+        ("Bash", ["bash"], "Shell interpreter"),
+        ("Python3", ["python3"], "CLI and compiler runtime"),
+        ("Lua", ["lua"], "Configuration runtime"),
+        ("Luac", ["luac"], "Lua syntax compiler"),
+    ]
+
+    recommended_bins = [
+        ("SwayNC", ["swaync", "swaync-client"], "Notification daemon & control center"),
+        ("Hyprlock", ["hyprlock"], "Screen locker"),
+        ("Rofi", ["rofi"], "Application launcher & menu modal"),
+        ("Wlogout", ["wlogout"], "Session & power menu overlay"),
+        ("Wallpaper Daemon", ["swww", "swww-daemon", "hyprpaper"], "Wallpaper renderer daemon"),
+        ("Kitty", ["kitty"], "Terminal emulator"),
+        ("wl-copy", ["wl-copy"], "Wayland clipboard utility"),
+        ("cliphist", ["cliphist"], "Clipboard history daemon"),
+        ("Polkit Agent", [
+            "/usr/lib/hyprpolkitagent/hyprpolkitagent",
+            "/usr/libexec/hyprpolkitagent",
+            "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1",
+            "/usr/libexec/polkit-gnome-authentication-agent-1",
+            "/usr/lib/polkit-kde-authentication-agent-1",
+            "hyprpolkitagent",
+            "lxpolkit",
+        ], "Privilege escalation authentication agent"),
+    ]
+
+    optional_bins = [
+        ("playerctl", ["playerctl"], "MPRIS media player controls"),
+        ("brightnessctl", ["brightnessctl"], "Display backlight controls"),
+        ("hyprshot", ["hyprshot"], "Screenshot utility"),
+        ("hyprpicker", ["hyprpicker"], "Screen color picker"),
+        ("Network Applet", ["nm-applet"], "NetworkManager tray indicator"),
+        ("Bluetooth Applet", ["blueman-applet"], "Bluetooth tray indicator"),
+        ("ImageMagick", ["magick", "convert"], "Asset rasterizer"),
+    ]
+
+    def _evaluate(name: str, candidates: list, desc: str, category: str):
+        found_path = None
+        for cand in candidates:
+            if cand.startswith("/"):
+                if os.path.isfile(cand) and os.access(cand, os.X_OK):
+                    found_path = cand
+                    break
+            else:
+                p = shutil.which(cand)
+                if p:
+                    found_path = p
+                    break
+        checks.append({
+            "name": name,
+            "category": category,
+            "description": desc,
+            "found": found_path is not None,
+            "path": found_path,
+        })
+
+    for name, cands, desc in required_bins:
+        _evaluate(name, cands, desc, "required")
+
+    for name, cands, desc in recommended_bins:
+        _evaluate(name, cands, desc, "recommended")
+
+    for name, cands, desc in optional_bins:
+        _evaluate(name, cands, desc, "optional")
+
+    req_failed = [c for c in checks if c["category"] == "required" and not c["found"]]
+    rec_failed = [c for c in checks if c["category"] == "recommended" and not c["found"]]
+    opt_failed = [c for c in checks if c["category"] == "optional" and not c["found"]]
+
+    all_req_ok = len(req_failed) == 0
+    status_str = "ok" if all_req_ok and len(rec_failed) == 0 else ("warning" if all_req_ok else "error")
+
+    if getattr(args, "json", False):
+        output = {
+            "status": status_str,
+            "summary": {
+                "total": len(checks),
+                "required_total": len(required_bins),
+                "required_missing": len(req_failed),
+                "recommended_total": len(recommended_bins),
+                "recommended_missing": len(rec_failed),
+                "optional_total": len(optional_bins),
+                "optional_missing": len(opt_failed),
+            },
+            "checks": checks,
+        }
+        print(json.dumps(output, indent=2))
+        return 0 if all_req_ok else 1
+
+    # Human-readable output
+    print(bold(cyan("\n╭──────────────────────────────────────────────────────────╮")))
+    print(bold(cyan("│               Obsyx Doctor Diagnostic Check              │")))
+    print(bold(cyan("╰──────────────────────────────────────────────────────────╯\n")))
+
+    for cat, title, badge in [
+        ("required", "Required Core Tooling", "REQUIRED"),
+        ("recommended", "Recommended Desktop Components", "RECOMMENDED"),
+        ("optional", "Optional Utilities & Applets", "OPTIONAL"),
+    ]:
+        print(bold(f"► {title}"))
+        for c in checks:
+            if c["category"] != cat:
+                continue
+            if c["found"]:
+                status = green("✔ FOUND ")
+                p_text = dim(f"({c['path']})")
+                print(f"  {status} {bold(c['name']):<20} {p_text}")
+            else:
+                if cat == "required":
+                    status = red("✘ MISSING")
+                elif cat == "recommended":
+                    status = yellow("▲ MISSING")
+                else:
+                    status = dim("○ ABSENT ")
+                print(f"  {status} {bold(c['name']):<20} {dim(c['description'])}")
+        print()
+
+    print(bold("Summary:"))
+    if req_failed:
+        print(f"  {red('Required dependencies missing:')} {len(req_failed)}")
+        for rf in req_failed:
+            print(f"    - {rf['name']} ({rf['description']})")
+    else:
+        print(f"  {green('All required core dependencies found.')}")
+
+    if rec_failed:
+        print(f"  {yellow('Recommended desktop components missing:')} {len(rec_failed)}")
+        for rf in rec_failed:
+            print(f"    - {rf['name']} ({rf['description']})")
+
+    if opt_failed:
+        print(f"  {dim(f'Optional tools absent: {len(opt_failed)}')}")
+
+    print()
+    return 0 if all_req_ok else 1
+
+
+# ---------------------------------------------------------------------------
+# Validate Command
+# ---------------------------------------------------------------------------
+
+def run_validate(args) -> int:
+    """Automate syntax and integrity checks across Lua, JSONC, Shell, and Tokens."""
+    target_root = os.path.abspath(getattr(args, "path", None) or os.getcwd())
+
+    results = {
+        "lua": {"total": 0, "passed": 0, "failed": 0, "errors": []},
+        "jsonc": {"total": 0, "passed": 0, "failed": 0, "errors": []},
+        "shell": {"total": 0, "passed": 0, "failed": 0, "errors": []},
+        "tokens": {"total": 0, "passed": 0, "failed": 0, "errors": []},
+    }
+
+    # 1. Lua Validation
+    lua_files = []
+    for root, _, files in os.walk(target_root):
+        if any(ignored in root for ignored in [".git", "node_modules", ".gemini", "__pycache__"]):
+            continue
+        for f in files:
+            if f.endswith(".lua"):
+                lua_files.append(os.path.join(root, f))
+
+    has_luac = shutil.which("luac") is not None
+
+    for lf in sorted(lua_files):
+        results["lua"]["total"] += 1
+        rel = os.path.relpath(lf, target_root)
+        if has_luac:
+            proc = subprocess.run(["luac", "-p", lf], capture_output=True, text=True)
+            if proc.returncode == 0:
+                results["lua"]["passed"] += 1
+            else:
+                results["lua"]["failed"] += 1
+                results["lua"]["errors"].append({"file": rel, "error": proc.stderr.strip()})
+        else:
+            # Fallback to lua loadfile
+            proc = subprocess.run(
+                ["lua", "-e", f'local f, err = loadfile("{lf}"); assert(f, err)'],
+                capture_output=True, text=True,
+            )
+            if proc.returncode == 0:
+                results["lua"]["passed"] += 1
+            else:
+                results["lua"]["failed"] += 1
+                results["lua"]["errors"].append({"file": rel, "error": proc.stderr.strip()})
+
+    # 2. JSONC and JSON Validation
+    json_files = []
+    for root, _, files in os.walk(target_root):
+        if any(ignored in root for ignored in [".git", "node_modules", ".gemini", "__pycache__", ".vscode"]):
+            continue
+        for f in files:
+            if f.endswith(".json") or f.endswith(".jsonc"):
+                json_files.append(os.path.join(root, f))
+
+    for jf in sorted(json_files):
+        results["jsonc"]["total"] += 1
+        rel = os.path.relpath(jf, target_root)
+        try:
+            with open(jf, "r", encoding="utf-8") as f:
+                content = f.read()
+            cleaned = _strip_jsonc_comments(content)
+            json.loads(cleaned)
+            results["jsonc"]["passed"] += 1
+        except Exception as e:
+            results["jsonc"]["failed"] += 1
+            results["jsonc"]["errors"].append({"file": rel, "error": str(e)})
+
+    # 3. Shell Script Validation
+    sh_files = []
+    for root, _, files in os.walk(target_root):
+        if any(ignored in root for ignored in [".git", "node_modules", ".gemini", "__pycache__"]):
+            continue
+        for f in files:
+            if f.endswith(".sh"):
+                sh_files.append(os.path.join(root, f))
+
+    for sf in sorted(sh_files):
+        results["shell"]["total"] += 1
+        rel = os.path.relpath(sf, target_root)
+        # Check executable flag
+        if not os.access(sf, os.X_OK):
+            results["shell"]["failed"] += 1
+            results["shell"]["errors"].append({"file": rel, "error": "File is not executable (chmod +x needed)"})
+            continue
+
+        # Check syntax with bash -n
+        proc = subprocess.run(["bash", "-n", sf], capture_output=True, text=True)
+        if proc.returncode == 0:
+            results["shell"]["passed"] += 1
+        else:
+            results["shell"]["failed"] += 1
+            results["shell"]["errors"].append({"file": rel, "error": proc.stderr.strip()})
+
+    # 4. Canonical Design Tokens Validation
+    token_files = glob.glob(os.path.join(target_root, "core", "tokens", "*.json"))
+    for tf in sorted(token_files):
+        results["tokens"]["total"] += 1
+        rel = os.path.relpath(tf, target_root)
+        try:
+            with open(tf, "r", encoding="utf-8") as f:
+                tok_data = json.load(f)
+
+            for key in ("name", "palette", "geometry", "blur"):
+                if key not in tok_data:
+                    raise ValueError(f"Missing required key '{key}' in design tokens")
+
+            # Check essential palette keys
+            if "void" not in tok_data["palette"] and "background" not in tok_data["palette"]:
+                raise ValueError("Missing essential palette color 'void' or 'background'")
+            for pkey in ("surface", "accent", "warning", "danger"):
+                if pkey not in tok_data["palette"]:
+                    raise ValueError(f"Missing essential palette color '{pkey}'")
+
+            results["tokens"]["passed"] += 1
+        except Exception as e:
+            results["tokens"]["failed"] += 1
+            results["tokens"]["errors"].append({"file": rel, "error": str(e)})
+
+    # Verify generated token artifacts exist if core tokens are present
+    if token_files:
+        expected_artifacts = [
+            "hypr/themes/noctis_amethyst.lua",
+            "waybar/generated/theme-tokens.css",
+            "rofi/generated/theme-tokens.rasi",
+            "swaync/generated/theme-tokens.css",
+            "hypr/generated/theme-tokens.conf",
+            "kitty/generated/theme-tokens.conf",
+            "wlogout/generated/theme-tokens.css",
+        ]
+        for art in expected_artifacts:
+            art_path = os.path.join(target_root, art)
+            results["tokens"]["total"] += 1
+            if os.path.isfile(art_path) and os.path.getsize(art_path) > 0:
+                results["tokens"]["passed"] += 1
+            else:
+                results["tokens"]["failed"] += 1
+                results["tokens"]["errors"].append({
+                    "file": art,
+                    "error": f"Generated token artifact missing or empty: {art}",
+                })
+
+    total_failed = sum(v["failed"] for v in results.values())
+    is_passed = (total_failed == 0)
+
+    if getattr(args, "json", False):
+        output = {
+            "status": "ok" if is_passed else "error",
+            "passed": is_passed,
+            "target": target_root,
+            "summary": results,
+        }
+        print(json.dumps(output, indent=2))
+        return 0 if is_passed else 1
+
+    # Human-readable output
+    print(bold(cyan("\n╭──────────────────────────────────────────────────────────╮")))
+    print(bold(cyan("│               Obsyx Configuration Validator              │")))
+    print(bold(cyan("╰──────────────────────────────────────────────────────────╯\n")))
+    print(f"Target: {dim(target_root)}\n")
+
+    for cat, title in [
+        ("lua", "Lua Compositor Configurations"),
+        ("jsonc", "JSON / JSONC Module Stylesheets"),
+        ("shell", "Shell Telemetry & Service Scripts"),
+        ("tokens", "Design Tokens & Compiled Artifacts"),
+    ]:
+        data = results[cat]
+        badge = green(f"✔ {data['passed']}/{data['total']} PASS") if data["failed"] == 0 else red(f"✘ {data['failed']} FAIL ({data['passed']}/{data['total']})")
+        print(f"► {bold(title):<45} {badge}")
+        if data["errors"]:
+            for err in data["errors"]:
+                print(f"    {red('FAIL:')} {err['file']}")
+                print(f"          {dim(err['error'])}")
+
+    print()
+    if is_passed:
+        print(bold(green("✔ Validation Passed: All configurations, scripts, and tokens are syntactically valid.")))
+    else:
+        print(bold(red(f"✘ Validation Failed: {total_failed} errors detected across the codebase.")))
+    print()
+
+    return 0 if is_passed else 1
+
+
+# ---------------------------------------------------------------------------
+# Main CLI Entrypoint
+# ---------------------------------------------------------------------------
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="obsyx",
+        description="Obsyx — Modular Hyprland desktop environment framework CLI.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"Obsyx v{VERSION}",
+        help="Show Obsyx version.",
+    )
+
+    subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
+
+    # Doctor
+    doc_parser = subparsers.add_parser("doctor", help="Check system dependencies and desktop runtime tooling.")
+    doc_parser.add_argument("--json", action="store_true", help="Output diagnostic report as JSON.")
+    doc_parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose diagnostics.")
+
+    # Validate
+    val_parser = subparsers.add_parser("validate", help="Validate Lua, JSONC, Shell scripts, and design tokens.")
+    val_parser.add_argument("--path", "-p", help="Target configuration directory to validate (default: current directory).")
+    val_parser.add_argument("--json", action="store_true", help="Output validation results as JSON.")
+    val_parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose validation output.")
+
+    args = parser.parse_args()
+
+    if args.command == "doctor":
+        sys.exit(run_doctor(args))
+    elif args.command == "validate":
+        sys.exit(run_validate(args))
+    else:
+        parser.print_help()
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
