@@ -35,7 +35,7 @@ Registry.Desktop = {
     lock           = "hyprlock",
     logout         = "wlogout",
     notification   = "swaync",
-    wallpaper      = "awww",
+    wallpaper      = "swww",
     statusBar      = "waybar",
 }
 
@@ -71,14 +71,15 @@ Registry.Services = {
 
 Registry.Startup = {
 
-    wallpaperDaemon    = "awww-daemon",
-    statusBar          = "waybar",
+    authAgent          = "~/.config/hypr/scripts/auth-agent.sh",
     notificationDaemon = "swaync",
-    wallpaper          = "awww img ~/Pictures/Wallpapers/default.png",
+    wallpaperDaemon    = "swww-daemon",
+    wallpaper          = "~/.config/hypr/scripts/wallpaper.sh",
     clipboardText      = "wl-paste --type text --watch cliphist store",
     clipboardImage     = "wl-paste --type image --watch cliphist store",
     networkApplet      = "nm-applet",
     bluetoothApplet    = "blueman-applet",
+    statusBar          = "waybar",
 
 }
 
@@ -88,8 +89,10 @@ Registry.Startup = {
 
 Registry.Paths = {
 
-    wallpapers = "~/Pictures/Wallpapers",
-    defaultWallpaper = "~/Pictures/Wallpapers/default.png",
+    wallpapers                 = "~/Pictures/Wallpapers",
+    defaultWallpaper           = "~/Pictures/Wallpapers/default.png",
+    canonicalWallpapers        = "~/.config/hypr/assets/wallpapers",
+    canonicalDefaultWallpaper  = "~/.config/hypr/assets/wallpapers/noctis_amethyst_default.png",
 
 }
 

@@ -12,6 +12,12 @@
 local Startup = {
 
     ------------------------------------------------------------------------
+    -- Authentication Agent
+    ------------------------------------------------------------------------
+
+    Registry.Startup.authAgent,
+
+    ------------------------------------------------------------------------
     -- Core Services
     ------------------------------------------------------------------------
 
@@ -50,23 +56,29 @@ hl.on("hyprland.start", function()
     ------------------------------------------------------------------------
 
     for _, command in ipairs(Startup) do
-        hl.exec_cmd(command)
+        if command and command ~= "" then
+            hl.exec_cmd(command)
+        end
     end
 
     ------------------------------------------------------------------------
     -- Delay Wallpaper
     ------------------------------------------------------------------------
 
-    hl.timer(function()
+    if Registry.Startup.wallpaper and Registry.Startup.wallpaper ~= "" then
+        hl.timer(function()
 
-        hl.exec_cmd(Registry.Startup.wallpaper)
+            hl.exec_cmd(Registry.Startup.wallpaper)
 
-    end, {
+        end, {
 
-        timeout = 500,
+            timeout = 500,
 
-        type = "oneshot",
+            type = "oneshot",
 
-    })
+        })
+    end
 
 end)
+
+return Startup
