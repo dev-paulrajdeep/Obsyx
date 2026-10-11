@@ -29,6 +29,7 @@ import json
 import os
 import re
 import sys
+import tempfile
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -649,6 +650,11 @@ def main():
         default='wlogout/generated/theme-tokens.css',
         help='Path for the generated Wlogout CSS token stylesheet',
     )
+    parser.add_argument(
+        '--check',
+        action='store_true',
+        help='Check whether generated artifacts match current files without modifying them',
+    )
     args = parser.parse_args()
 
     # Load.
@@ -668,6 +674,38 @@ def main():
     except TokenError as e:
         print(f'error: token validation failed: {e}', file=sys.stderr)
         sys.exit(1)
+
+    if args.check:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            targets = [
+                (args.lua_out, generate_lua),
+                (args.css_out, generate_css),
+                (args.rofi_out, generate_rofi),
+                (args.swaync_out, generate_css),
+                (args.hypr_conf_out, generate_hypr_conf),
+                (args.kitty_out, generate_kitty_conf),
+                (args.wlogout_out, generate_css),
+            ]
+            mismatches = []
+            for target_path, gen_func in targets:
+                tmp_target = os.path.join(tmpdir, os.path.basename(target_path))
+                gen_func(tokens, tmp_target)
+                if not os.path.isfile(target_path):
+                    mismatches.append(f"{target_path} (missing)")
+                    continue
+                with open(tmp_target, "r", encoding="utf-8") as f1, open(target_path, "r", encoding="utf-8") as f2:
+                    if f1.read() != f2.read():
+                        mismatches.append(f"{target_path} (outdated content mismatch)")
+
+            if mismatches:
+                print(f"Error: {len(mismatches)} token artifact(s) are outdated or missing:", file=sys.stderr)
+                for m in mismatches:
+                    print(f"  - {m}", file=sys.stderr)
+                print("Run 'python3 tools/build_tokens.py' to regenerate compiled tokens.", file=sys.stderr)
+                sys.exit(1)
+
+            print("All token artifacts are up to date.")
+            sys.exit(0)
 
     # Generate.
     generate_lua(tokens, args.lua_out)
