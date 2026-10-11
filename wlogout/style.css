@@ -1,0 +1,60 @@
+/* Obsyx - Noctis Amethyst Wlogout Stylesheet
+ * Token-driven styling matching Hyprland, Waybar, Rofi, and SwayNC.
+ */
+
+@import "generated/theme-tokens.css";
+
+* {
+    background-image: none;
+    box-shadow: none;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+}
+
+window {
+    background-color: @noctis-overlay;
+}
+
+button {
+    border-radius: 8px;
+    border: 2px solid @hairline-strong;
+    color: @ink-default;
+    background-color: @noctis-surface-raised;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 25%;
+    margin: 10px;
+    transition: box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+button:focus,
+button:active,
+button:hover {
+    background-color: @amethyst-fill;
+    border-color: @amethyst-line;
+    color: @amethyst-ink;
+    outline-style: none;
+}
+
+#lock {
+    background-image: image(url("/usr/share/wlogout/icons/lock.png"));
+}
+
+#logout {
+    background-image: image(url("/usr/share/wlogout/icons/logout.png"));
+}
+
+#suspend {
+    background-image: image(url("/usr/share/wlogout/icons/suspend.png"));
+}
+
+#hibernate {
+    background-image: image(url("/usr/share/wlogout/icons/hibernate.png"));
+}
+
+#shutdown {
+    background-image: image(url("/usr/share/wlogout/icons/shutdown.png"));
+}
+
+#reboot {
+    background-image: image(url("/usr/share/wlogout/icons/reboot.png"));
+}

@@ -25,12 +25,19 @@ Obsyx uses a **canonical JSON token source** as the single source of truth for i
 | `swaync/style.css` | Token-driven SwayNC stylesheet with urgency states and widget styling |
 | `hypr/generated/theme-tokens.conf` | Generated Hyprland / Hyprlock configuration variables |
 | `hypr/hyprlock.conf` | Token-driven screen lock configuration with blurred screenshot and input field |
+| `kitty/generated/theme-tokens.conf` | Generated Kitty terminal color tokens |
+| `kitty/kitty.conf` | Kitty terminal configuration importing generated tokens |
+| `wlogout/generated/theme-tokens.css` | Generated Wlogout GTK3 CSS tokens |
+| `wlogout/layout` | Wlogout action layout configuration |
+| `wlogout/style.css` | Token-driven Wlogout stylesheet importing generated tokens |
 | `tests/test_build_tokens.py` | Token compiler automated test suite |
 | `tests/test_theme_loader.py` | Theme loader and decoration wiring test suite |
 | `tests/test_waybar_tokens.py` | Waybar token integration and consistency test suite |
 | `tests/test_rofi_theme.py` | Rofi configuration, theme, and scripts test suite |
 | `tests/test_swaync_theme.py` | SwayNC configuration and stylesheet token test suite |
 | `tests/test_hyprlock_theme.py` | Hyprlock configuration and token test suite |
+| `tests/test_kitty_theme.py` | Kitty terminal configuration and token test suite |
+| `tests/test_wlogout_theme.py` | Wlogout layout and token stylesheet test suite |
 
 ## Hyprland Theme Loader & Decoration
 
@@ -71,6 +78,21 @@ Hyprlock screen locking is driven by compiled configuration variables:
 1. `hypr/generated/theme-tokens.conf` provides `$token = rgb(...)` / `rgba(...)` variables for palette, geometry, and blur parameters.
 2. `hypr/hyprlock.conf` sources `generated/theme-tokens.conf` to configure background live screenshot blurring (`$blur_passes`, `$blur_size`), time/date labels (`$amethyst_ink`, `$ink_default`), and the authentication input field (`$amethyst`, `$warning`, `$danger`).
 
+## Kitty Terminal Theming
+
+Kitty terminal colors and configuration are unified through token generation:
+
+1. `kitty/generated/theme-tokens.conf` defines terminal foreground, background (`void`), selection, cursor, window borders, tab bar, and the 16 standard/bright ANSI colors directly from the Noctis Amethyst palette.
+2. `kitty/kitty.conf` imports `generated/theme-tokens.conf`, configuring typography (`JetBrainsMono Nerd Font`), padding, opacity, and window rules without hardcoded color values.
+
+## Wlogout Logout Menu Integration
+
+Wlogout session management overlay is styled using compiled GTK3 tokens:
+
+1. `wlogout/generated/theme-tokens.css` defines the canonical colors as `@define-color` rules.
+2. `wlogout/layout` specifies session actions (`lock`, `hibernate`, `logout`, `shutdown`, `suspend`, `reboot`) with associated Hyprland and systemd commands.
+3. `wlogout/style.css` imports `generated/theme-tokens.css` and provides Noctis Amethyst glass styling (`@noctis-surface-raised`, `@hairline-strong`, `@amethyst-fill`, `@amethyst-line`) with zero hardcoded hex values.
+
 ## Running the compiler
 
 From the repository root:
@@ -88,7 +110,9 @@ python3 tools/build_tokens.py \
     --css-out waybar/generated/theme-tokens.css \
     --rofi-out rofi/generated/theme-tokens.rasi \
     --swaync-out swaync/generated/theme-tokens.css \
-    --hypr-conf-out hypr/generated/theme-tokens.conf
+    --hypr-conf-out hypr/generated/theme-tokens.conf \
+    --kitty-out kitty/generated/theme-tokens.conf \
+    --wlogout-out wlogout/generated/theme-tokens.css
 ```
 
 ## Running the tests
@@ -113,6 +137,8 @@ The compiler translates these to:
 | Rofi RASI | `#9b7ede` | `rgba(155, 126, 222, 0.16)` |
 | SwayNC CSS | `#9b7ede` | `rgba(155, 126, 222, 0.16)` |
 | Hypr Conf | `rgb(9b7ede)` | `rgba(9b7ede29)` |
+| Kitty Conf | `#9b7ede` | `#9b7ede` |
+| Wlogout CSS | `#9b7ede` | `rgba(155, 126, 222, 0.16)` |
 
 ## Adding a new token
 
@@ -124,4 +150,4 @@ The compiler translates these to:
 
 ## Important
 
-The generated files (`hypr/themes/noctis_amethyst.lua` and `waybar/generated/theme-tokens.css`) are **committed to the repository** — they are part of the distributable configuration. However, they should never be edited by hand. Always modify the token source and re-run the compiler.
+The generated files (`hypr/themes/noctis_amethyst.lua`, `waybar/generated/theme-tokens.css`, `rofi/generated/theme-tokens.rasi`, `swaync/generated/theme-tokens.css`, `hypr/generated/theme-tokens.conf`, `kitty/generated/theme-tokens.conf`, and `wlogout/generated/theme-tokens.css`) are **committed to the repository** — they are part of the distributable configuration. However, they should never be edited by hand. Always modify the token source and re-run the compiler.
