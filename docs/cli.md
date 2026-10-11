@@ -62,3 +62,27 @@ Automates comprehensive syntax, structure, and integrity checks across the entir
 #### Exit Codes
 - `0`: All configurations, scripts, and design tokens passed validation.
 - `1`: One or more syntax errors, permission issues, or missing artifacts were detected.
+
+---
+
+### 3. `obsyx install`
+
+Safely deploys Obsyx configuration components into target user dotfiles directory with automated timestamped backups and dry-run simulation:
+- **`--dry-run`**: Simulate deployment without touching filesystem.
+- **`--dest PATH`**: Destination target (defaults to `~/.config`).
+- **`--components COMP1,COMP2`**: Selectively install components (`hypr`, `waybar`, `rofi`, `swaync`, `kitty`, `wlogout`).
+- **`--skip COMP1`**: Exclude specific components.
+- **`--json`**: Emit machine-readable installation report.
+
+#### Usage
+
+```bash
+# Dry-run preview
+./bin/obsyx install --dry-run
+
+# Standard deployment
+./bin/obsyx install
+
+# Isolated sandbox deployment
+./bin/obsyx install --dest /tmp/test-config
+```

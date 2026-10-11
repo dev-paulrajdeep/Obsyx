@@ -382,6 +382,163 @@ def run_validate(args) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Install Command
+# ---------------------------------------------------------------------------
+
+SUPPORTED_COMPONENTS = {
+    "hypr": ("hypr", "Hyprland compositor, themes, autostart, and hyprlock"),
+    "waybar": ("waybar", "Waybar status bar, layouts, CSS, and telemetry scripts"),
+    "rofi": ("rofi", "Rofi launcher, powermenu, cliphist, and glass theme"),
+    "swaync": ("swaync", "SwayNC notification daemon and control center"),
+    "kitty": ("kitty", "Kitty terminal emulator configuration and theme tokens"),
+    "wlogout": ("wlogout", "Wlogout logout dialog layout and CSS theme"),
+}
+
+
+def run_install(args) -> int:
+    """Safely install Obsyx desktop components with dry-run and automated backups."""
+    from datetime import datetime
+
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    raw_dest = getattr(args, "dest", None) or getattr(args, "target", None)
+    if not raw_dest:
+        raw_dest = os.environ.get("XDG_CONFIG_HOME") or os.path.join(os.path.expanduser("~"), ".config")
+    dest_root = os.path.abspath(os.path.expanduser(raw_dest))
+
+    is_dry_run = getattr(args, "dry_run", False)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Select components
+    selected_keys = list(SUPPORTED_COMPONENTS.keys())
+    if getattr(args, "components", None):
+        user_comps = [c.strip().lower() for c in args.components.split(",") if c.strip()]
+        selected_keys = [k for k in selected_keys if k in user_comps]
+
+    if getattr(args, "skip", None):
+        skip_comps = [c.strip().lower() for c in args.skip.split(",") if c.strip()]
+        selected_keys = [k for k in selected_keys if k not in skip_comps]
+
+    actions = []
+
+    for comp in selected_keys:
+        comp_dir, comp_desc = SUPPORTED_COMPONENTS[comp]
+        src_path = os.path.join(repo_root, comp_dir)
+        dest_path = os.path.join(dest_root, comp_dir)
+
+        if not os.path.exists(src_path):
+            actions.append({
+                "component": comp,
+                "status": "error",
+                "message": f"Source directory missing in repository: {src_path}",
+                "source": src_path,
+                "dest": dest_path,
+                "backup": None,
+            })
+            continue
+
+        # Check existing destination
+        if os.path.islink(dest_path):
+            current_target = os.path.realpath(dest_path)
+            expected_target = os.path.realpath(src_path)
+            if current_target == expected_target:
+                actions.append({
+                    "component": comp,
+                    "status": "already_linked",
+                    "message": "Already linked to current repository",
+                    "source": src_path,
+                    "dest": dest_path,
+                    "backup": None,
+                })
+                continue
+            else:
+                # Link exists but points elsewhere: backup the symlink
+                backup_path = f"{dest_path}.backup.{timestamp}"
+                if not is_dry_run:
+                    os.rename(dest_path, backup_path)
+                    os.symlink(src_path, dest_path)
+                actions.append({
+                    "component": comp,
+                    "status": "backed_up_and_linked",
+                    "message": f"Existing symlink backed up and re-linked",
+                    "source": src_path,
+                    "dest": dest_path,
+                    "backup": backup_path,
+                })
+        elif os.path.exists(dest_path):
+            # Real directory or file exists: create backup
+            backup_path = f"{dest_path}.backup.{timestamp}"
+            if not is_dry_run:
+                shutil.move(dest_path, backup_path)
+                os.symlink(src_path, dest_path)
+            actions.append({
+                "component": comp,
+                "status": "backed_up_and_linked",
+                "message": f"Existing directory backed up and linked",
+                "source": src_path,
+                "dest": dest_path,
+                "backup": backup_path,
+            })
+        else:
+            # Does not exist: fresh install
+            if not is_dry_run:
+                os.makedirs(dest_root, exist_ok=True)
+                os.symlink(src_path, dest_path)
+            actions.append({
+                "component": comp,
+                "status": "linked",
+                "message": "Symlink created",
+                "source": src_path,
+                "dest": dest_path,
+                "backup": None,
+            })
+
+    if getattr(args, "json", False):
+        output = {
+            "status": "ok",
+            "dry_run": is_dry_run,
+            "destination": dest_root,
+            "timestamp": timestamp,
+            "actions": actions,
+        }
+        print(json.dumps(output, indent=2))
+        return 0
+
+    # Human-readable output
+    title_suffix = " (DRY RUN SIMULATION)" if is_dry_run else ""
+    print(bold(cyan("\n╭──────────────────────────────────────────────────────────╮")))
+    print(bold(cyan(f"│               Obsyx Desktop Safe Installer{title_suffix[:15]:<15}│")))
+    print(bold(cyan("╰──────────────────────────────────────────────────────────╯\n")))
+    if is_dry_run:
+        print(yellow(bold("⚡ DRY RUN: No modifications were made to the filesystem.\n")))
+    print(f"Target Destination: {bold(dest_root)}\n")
+
+    for act in actions:
+        c_name = act["component"]
+        c_status = act["status"]
+        if c_status == "linked":
+            badge = green("✔ LINKED   ")
+        elif c_status == "already_linked":
+            badge = cyan("○ ALREADY LINKED")
+        elif c_status == "backed_up_and_linked":
+            badge = yellow("▲ BACKUP+LINK   ")
+        else:
+            badge = red("✘ ERROR         ")
+
+        print(f"  {badge:<18} {bold(c_name):<12} {act['dest']}")
+        if act["backup"]:
+            print(f"                     {dim('Backup created at: ' + act['backup'])}")
+
+    print()
+    if is_dry_run:
+        print(bold(yellow("Simulation complete. Run without --dry-run to apply changes.")))
+    else:
+        print(bold(green("✔ Installation complete! All selected components are safely linked.")))
+    print()
+
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Main CLI Entrypoint
 # ---------------------------------------------------------------------------
 
@@ -410,12 +567,22 @@ def main():
     val_parser.add_argument("--json", action="store_true", help="Output validation results as JSON.")
     val_parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose validation output.")
 
+    # Install
+    ins_parser = subparsers.add_parser("install", help="Safely install Obsyx desktop configuration with backups and dry-run.")
+    ins_parser.add_argument("--dest", "--target", dest="dest", help="Target configuration destination (default: ~/.config).")
+    ins_parser.add_argument("--dry-run", action="store_true", help="Simulate installation without touching the filesystem.")
+    ins_parser.add_argument("--components", "-c", help="Comma-separated components to install (e.g. hypr,waybar,kitty).")
+    ins_parser.add_argument("--skip", "-s", help="Comma-separated components to skip.")
+    ins_parser.add_argument("--json", action="store_true", help="Output installation plan/result as JSON.")
+
     args = parser.parse_args()
 
     if args.command == "doctor":
         sys.exit(run_doctor(args))
     elif args.command == "validate":
         sys.exit(run_validate(args))
+    elif args.command == "install":
+        sys.exit(run_install(args))
     else:
         parser.print_help()
         sys.exit(1)
