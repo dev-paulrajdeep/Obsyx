@@ -1,6 +1,6 @@
 # Obsyx Official Theme Collection & Design System
 
-Obsyx provides five official themes built on top of the canonical design-token engine. Each theme defines a complete set of color, geometry, opacity, blur, and shadow tokens that compile consistently across all supported desktop components (Hyprland, Waybar, Rofi, SwayNC, Hyprlock, Kitty, and Wlogout).
+Obsyx provides five themes backed by JSON token files and a compiler. The compiler generates theme tables/styles for Hyprland, Waybar, Rofi, SwayNC, Hyprlock, Kitty, and Wlogout. The exact token mappings vary by output format.
 
 ---
 
@@ -94,7 +94,7 @@ obsyx theme show frost
 # Simulate switching to Obsidian
 obsyx theme apply obsidian --dry-run
 
-# Switch to Aurora and reload compositor components
+# Apply Aurora (reload signals are best-effort when matching processes are available)
 obsyx theme apply aurora
 ```
 
@@ -119,7 +119,7 @@ When `obsyx theme apply <name>` runs, it compiles and installs:
 - `kitty/generated/theme-tokens.conf` (Terminal palette)
 - `wlogout/generated/theme-tokens.css` (Logout menu styles)
 
-And signals live components:
+The CLI also attempts to signal live components when the relevant environment or commands are present. Failures are ignored, so inspect or restart components if they do not pick up the new files:
 - `hyprctl reload`
 - `pkill -SIGUSR2 waybar`
 - `swaync-client -R`

@@ -1,185 +1,97 @@
-# Obsyx CLI (`bin/obsyx`)
+# Obsyx CLI
 
-The Obsyx command-line interface provides diagnostic health checking, configuration syntax validation, and desktop environment tooling.
-
-## Location & Execution
-
-The CLI executable is located at `bin/obsyx` and requires only Python 3 standard library:
+The CLI is `bin/obsyx`, a Python 3 program that uses the standard library. When installed from the Arch package, it is exposed as `obsyx`.
 
 ```bash
 ./bin/obsyx --help
 ./bin/obsyx --version
 ```
 
----
+Commands that accept a destination use `$XDG_CONFIG_HOME`, falling back to `~/.config`, unless `--dest` is supplied. Use a disposable directory such as `/tmp/obsyx-preview` when inspecting write behavior.
 
-## Commands
+## `doctor`
 
-### 1. `obsyx doctor`
-
-Checks system dependencies and desktop runtime tooling across three tiers:
-- **Required Core Tooling**: `hyprland`, `waybar`, `bash`, `python3`, `lua`, `luac`.
-- **Recommended Desktop Components**: `swaync`, `hyprlock`, `rofi`, `wlogout`, wallpaper daemon (`swww` or `hyprpaper`), `kitty`, `wl-copy`, `cliphist`, and Polkit authentication agent.
-- **Optional Utilities & Applets**: `playerctl`, `brightnessctl`, `hyprshot`, `hyprpicker`, `nm-applet`, `blueman-applet`, ImageMagick (`magick`/`convert`).
-
-#### Usage
+Checks for required, recommended, and optional executable dependencies. `--json` prints the report as JSON. Exit status is `1` if any required command is missing; recommended and optional misses are reported but do not fail the command. This checks command availability only.
 
 ```bash
-# Standard formatted diagnostic check
 ./bin/obsyx doctor
-
-# Machine-readable JSON output
 ./bin/obsyx doctor --json
 ```
 
-#### Exit Codes
-- `0`: All required dependencies are installed and available.
-- `1`: One or more required dependencies are missing.
+## `validate`
 
----
+Walks the target directory and performs static checks:
 
-### 2. `obsyx validate`
+- Parses Lua files with `luac -p`, or falls back to `lua`'s `loadfile` if `luac` is unavailable.
+- Parses `.json` and `.jsonc` after stripping comments.
+- Requires `.sh` files to be executable and checks them with `bash -n`.
+- Checks a small set of required keys in token JSON and the presence of expected generated token artifacts. This is not the full validation performed by the token compiler.
 
-Automates comprehensive syntax, structure, and integrity checks across the entire desktop configuration repository:
-- **Lua Compositor Configurations**: Validates all `*.lua` files in `hypr/` via `luac -p` (or `lua` fallback).
-- **JSONC / JSON Module Stylesheets**: Strips comments and validates strict JSON parsing via `json.loads` for Waybar, SwayNC, and tokens.
-- **Shell Telemetry & Service Scripts**: Validates all `*.sh` files for execution flags (`chmod +x`) and bash syntax (`bash -n`).
-- **Design Tokens & Compiled Artifacts**: Validates canonical design token schema (`core/tokens/noctis_amethyst.json`) and verifies presence of all compiled target artifacts (`hypr`, `waybar`, `rofi`, `swaync`, `hyprlock`, `kitty`, `wlogout`).
-
-#### Usage
+It does not run Hyprland, validate every component's native configuration semantics, or prove that a desktop session works. Without `--path`, the current working directory is checked. Exit status is `1` when a check fails.
 
 ```bash
-# Validate current repository
 ./bin/obsyx validate
-
-# Validate custom or isolated configuration directory
-./bin/obsyx validate --path /path/to/custom/config
-
-# Machine-readable JSON validation report
-./bin/obsyx validate --json
+./bin/obsyx validate --path /path/to/config --json
 ```
 
-#### Exit Codes
-- `0`: All configurations, scripts, and design tokens passed validation.
-- `1`: One or more syntax errors, permission issues, or missing artifacts were detected.
+## `install`
 
----
-
-### 3. `obsyx install`
-
-Safely deploys Obsyx configuration components into target user dotfiles directory with automated timestamped backups, interactive setup wizard, and dry-run simulation:
-- **`--interactive` / `-i`**: Launch guided interactive setup wizard with presets and hardware tuning.
-- **`--dry-run`**: Simulate deployment without touching filesystem.
-- **`--dest PATH`**: Destination target (defaults to `~/.config`).
-- **`--components COMP1,COMP2`**: Selectively install components (`hypr`, `waybar`, `rofi`, `swaync`, `kitty`, `wlogout`).
-- **`--skip COMP1`**: Exclude specific components.
-- **`--json`**: Emit machine-readable installation report.
-
-#### Usage
+Creates symlinks for the supported component directories under the destination. Existing target entries are moved to a timestamped backup before linking. The installer does not install system packages. See [installer details](installer.md) for component names and consequences.
 
 ```bash
-# Interactive guided setup wizard
-./bin/obsyx install --interactive
-
-# Dry-run preview
 ./bin/obsyx install --dry-run
-
-# Standard deployment
-./bin/obsyx install
-
-# Isolated sandbox deployment
-./bin/obsyx install --dest /tmp/test-config
+./bin/obsyx install --components hypr,waybar
+./bin/obsyx install --skip wlogout
+./bin/obsyx install --interactive
+./bin/obsyx install --dest /tmp/obsyx-preview --json
 ```
 
----
+Options: `--dest`/`--target`, `--dry-run`, `--components`/`-c`, `--skip`/`-s`, `--interactive`/`-i`, and `--json`. The default component set is `hypr`, `waybar`, `rofi`, `swaync`, `kitty`, and `wlogout`.
 
-### 4. `obsyx docgen`
+## `theme`
 
-Automated keybinding parser and documentation generator:
-- **`--output PATH`** (`-o`): Target markdown cheatsheet path (defaults to `KEYBINDINGS.md`).
-- **`--rofi-script PATH`** (`-r`): Target interactive Rofi search script path (defaults to `rofi/scripts/keybindings.sh`).
-- **`--check`**: Verify that generated cheatsheet and script files match active configuration without overwriting (exit code `0` if up to date, `1` if outdated).
-- **`--json`**: Emit machine-readable JSON structure of all parsed categories and keybindings.
-
-#### Usage
+Lists and displays the five official themes or compiles one into files under the destination. Applying a theme writes marker/state files and generated theme artifacts, then attempts reload signals for running components. Reload commands are best-effort; a successful CLI exit does not prove that each application accepted the result.
 
 ```bash
-# Generate KEYBINDINGS.md and rofi/scripts/keybindings.sh
+./bin/obsyx theme list
+./bin/obsyx theme show obsidian --json
+./bin/obsyx theme apply frost --dry-run
+./bin/obsyx theme apply ember --dest /tmp/obsyx-preview
+./bin/obsyx theme rofi
+```
+
+Actions: `list`, `show <name>`, `apply <name>`, and `rofi`. `apply` accepts `--dest`/`--target`, `--dry-run`, and `--json`; `list` and `show` accept `--dest` and `--json`. A theme apply targets generated paths for all components even if those component directories are not linked or installed.
+
+## `profile`
+
+Lists, displays, and applies the `laptop` and `workstation` profiles. Applying writes Hyprland profile overrides, Waybar configuration/style overrides, and `.obsyx_profile` state. It may send reload signals when run inside a Hyprland session. Profile application is not a package or hardware detection operation.
+
+```bash
+./bin/obsyx profile list
+./bin/obsyx profile show laptop
+./bin/obsyx profile apply laptop --dry-run
+./bin/obsyx profile apply workstation --dest /tmp/obsyx-preview
+```
+
+Actions: `list`, `show <name>`, and `apply <name>`. `apply` accepts `--dest`/`--target`, `--dry-run`, and `--json`.
+
+## `docgen`
+
+Reads configured Hyprland keybindings and generates `KEYBINDINGS.md` and `rofi/scripts/keybindings.sh` by default. `--check` compares generated content without writing and returns nonzero if either output is stale. `--json` emits the parsed keybinding data.
+
+```bash
 ./bin/obsyx docgen
-
-# Verify documentation matches configuration
 ./bin/obsyx docgen --check
-
-# Output keybindings as JSON
 ./bin/obsyx docgen --json
 ```
 
----
+Options: `--output`/`-o`, `--rofi-script`/`-r`, `--check`, and `--json`.
 
-### 5. `obsyx profile`
-
-Desktop hardware variants and form-factor specialization:
-- **`obsyx profile list`**: List available profiles and show currently active profile.
-- **`obsyx profile show <name>`**: Inspect detailed profile metadata and feature matrix.
-- **`obsyx profile apply <name>`**: Deploy profile overrides into target dotfiles with live compositor reload.
-  - **`--dry-run`**: Simulate profile application without touching disk.
-  - **`--dest PATH`**: Target destination override (defaults to `~/.config`).
-  - **`--json`**: Output machine-readable JSON report.
-
-#### Usage
+## Static checks and tests
 
 ```bash
-# List profiles
-./bin/obsyx profile list
-
-# Show laptop profile tuning
-./bin/obsyx profile show laptop
-
-# Apply laptop profile to user environment
-./bin/obsyx profile apply laptop
-
-# Apply workstation profile to isolated sandbox
-./bin/obsyx profile apply workstation --dest /tmp/test-config
+./bin/obsyx validate
+python3 -m unittest discover tests/ -v
 ```
 
----
-
-### 6. `obsyx theme`
-
-Official theme collection management and live desktop palette switching:
-- **`obsyx theme list`**: List all five official Obsyx themes (`Noctis Amethyst`, `Obsidian`, `Frost`, `Aurora`, `Ember`), displaying color previews and marking the currently active theme.
-- **`obsyx theme show <name>`**: Inspect detailed palette hex values, alphas, geometry, blur passes, and opacity settings for a specific theme.
-- **`obsyx theme apply <name>`**: Apply an official theme to target configuration:
-  - Generates Lua theme table (`hypr/themes/<slug>.lua`).
-  - Compiles Waybar CSS, Rofi RASI, SwayNC CSS, Hyprland conf, Kitty conf, and Wlogout CSS.
-  - Persists active state in `$XDG_CONFIG_HOME/obsyx/theme` and `.obsyx_theme`.
-  - Dispatches live compositor reload signals (`hyprctl reload`, `pkill -SIGUSR2 waybar`, `swaync-client -R`).
-  - **`--dry-run`**: Simulate theme application without modifying the filesystem.
-  - **`--dest PATH`**: Target destination override (defaults to `~/.config`).
-  - **`--json`**: Output machine-readable JSON report.
-- **`obsyx theme rofi`**: Launch the interactive Rofi theme switcher menu.
-
-#### Usage
-
-```bash
-# List available official themes
-./bin/obsyx theme list
-
-# Output theme list as JSON
-./bin/obsyx theme list --json
-
-# Show Obsidian theme tokens
-./bin/obsyx theme show obsidian
-
-# Dry-run applying Frost theme
-./bin/obsyx theme apply frost --dry-run
-
-# Apply Ember theme to user environment
-./bin/obsyx theme apply ember
-
-# Apply Aurora theme to isolated sandbox
-./bin/obsyx theme apply aurora --dest /tmp/test-config
-
-# Launch interactive Rofi theme picker
-./bin/obsyx theme rofi
-```
+The Python suite includes static checks and a headless Wayland test runner. Neither command establishes successful ISO boot or installation on a target machine.

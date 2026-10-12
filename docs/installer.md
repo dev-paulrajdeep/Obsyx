@@ -1,109 +1,56 @@
-# Obsyx Automated Safe Installer
+# Desktop configuration installer
 
-Obsyx includes an automated, non-destructive installation framework designed to safely deploy configuration files into user dotfile environments without risk of configuration loss.
+`obsyx install` deploys Obsyx configuration directories into a user's XDG config directory. It does not install Linux packages, create a bootable system, or configure system services.
 
-## Installation Architecture
-
-The installer is invoked either via the central CLI or the dedicated shell wrapper:
-
-```bash
-# Using the Obsyx CLI
-./bin/obsyx install [OPTIONS]
-
-# Using the companion wrapper script
-./tools/install.sh [OPTIONS]
-```
-
-## Interactive Installation Wizard (`--interactive` / `-i`)
-
-Obsyx provides a guided interactive wizard for both first-time installations and configuration re-tuning. When executed in an interactive terminal without arguments, `./tools/install.sh` automatically launches this wizard:
-
-```bash
-# Launch interactive installer wizard via CLI
-./bin/obsyx install --interactive
-
-# Or using the companion shell wrapper
-./tools/install.sh
-```
-
-### Guided Setup Workflow
-
-The interactive wizard guides you through 6 setup stages:
-
-1. **Pre-flight Dependency Detection**: Inspects the host environment for core Wayland desktop binaries (`hyprland`, `waybar`, `rofi`, `swaync`, `kitty`, `wlogout`), reporting status (`FOUND` or `MISSING`).
-2. **Installation Destination Confirmation**: Confirms target dotfiles directory (defaults to `${XDG_CONFIG_HOME:-~/.config}`) and detects existing configuration directories scheduled for automatic backup.
-3. **Installation Preset Selection**:
-   - **Full Desktop Experience (Recommended)**: Installs all 6 core components (`hypr`, `waybar`, `rofi`, `swaync`, `kitty`, `wlogout`).
-   - **Core Minimal**: Installs only the core Hyprland compositor (`hypr`) and Waybar status bar (`waybar`).
-   - **Custom Selection**: Prompts for individual inclusion of each desktop component.
-4. **Official Theme Selection**: Selects the active desktop theme (`Noctis Amethyst`, `Obsidian`, `Frost`, `Aurora`, `Ember`).
-5. **Hardware Form-Factor Profile**: Configures hardware optimizations (`Default`, `Workstation`, `Laptop`).
-6. **Confirmation & Action Review**: Presents a comprehensive summary before taking action:
-   - **Proceed**: Applies live installation, automated backups, and generates theme artifacts.
-   - **Simulate (Dry Run)**: Simulates the entire deployment without touching the filesystem.
-   - **Cancel**: Aborts without making any changes.
-
----
-
-## Safety Features
-
-### 1. Dry-Run Simulation Mode (`--dry-run`)
-Allows inspecting all proposed filesystem changes before applying them. Zero modifications are made when `--dry-run` is active.
+## Preview first
 
 ```bash
 ./bin/obsyx install --dry-run
+./bin/obsyx install --dest /tmp/obsyx-preview --components hypr,waybar --dry-run
 ```
 
-### 2. Automatic Timestamped Backups
-If a destination directory or file already exists (for example `~/.config/hypr` or `~/.config/waybar`), the installer never overwrites it. Instead, it moves the existing directory to a timestamped backup:
+The normal destination is `$XDG_CONFIG_HOME`, or `~/.config` if that variable is unset. `--dest` and `--target` override it.
 
-```
-~/.config/hypr.backup.20261011_200300
-~/.config/waybar.backup.20261011_200300
-```
+## What the installer changes
 
-If the destination is already a symlink pointing to the current Obsyx repository, the installer recognizes it as already linked and safely skips it without redundant backups.
+The installer creates symlinks from the destination to the matching directories in the Obsyx repository. The repository must remain at its current path for those links to keep working. The six supported components are:
 
-### 3. Destination Overrides (`--dest` / `--target`)
-By default, the installer targets `${XDG_CONFIG_HOME:-$HOME/.config}`. You can override the target destination to preview or test Obsyx in an isolated sandbox:
+| Component | Target | Contents |
+|---|---|---|
+| `hypr` | `<dest>/hypr` | Hyprland configuration, themes, lock/idle/wallpaper settings, scripts |
+| `waybar` | `<dest>/waybar` | Bar configuration, styles, modules, telemetry scripts |
+| `rofi` | `<dest>/rofi` | Launcher, menus, styles, scripts |
+| `swaync` | `<dest>/swaync` | Notification daemon configuration and styles |
+| `kitty` | `<dest>/kitty` | Terminal configuration and generated colors |
+| `wlogout` | `<dest>/wlogout` | Logout layout and styles |
+
+By default all six are selected. `--components` selects a comma-separated subset; `--skip` removes components from the default or selected set. Unknown names are currently ignored by the CLI, so check the printed plan before applying.
+
+When a target already exists, the installer renames it to `<target>.backup.YYYYMMDD_HHMMSS` and then creates the symlink. An existing symlink to the same repository directory is left in place. These backups are not automatic merges: changes in the moved directory are not copied into Obsyx. Preserve and review the backup before removing it.
+
+## Interactive mode
 
 ```bash
-./bin/obsyx install --dest /tmp/test-config
+./bin/obsyx install --interactive
+# The wrapper also starts interactive mode when run in a terminal with no arguments.
+./tools/install.sh
 ```
 
-### 4. Selective Component Deployment (`--components` / `--skip`)
-Install only specific components or exclude unwanted ones:
+The wizard checks a small set of commands, asks for the destination, offers Full/Minimal/Custom component presets, selects a theme and optional profile, then asks whether to install, simulate, or cancel. The Minimal preset installs `hypr` and `waybar`. Its dependency check reports availability; it does not fetch or install dependencies.
 
-```bash
-# Install only Waybar and Kitty
-./bin/obsyx install --components waybar,kitty
+## Options
 
-# Install all components except Wlogout
-./bin/obsyx install --skip wlogout
-```
+| Option | Behavior |
+|---|---|
+| `--dest PATH`, `--target PATH` | Destination config directory |
+| `--dry-run` | Print planned links without filesystem changes |
+| `--components LIST`, `-c LIST` | Select component names, comma-separated |
+| `--skip LIST`, `-s LIST` | Exclude component names, comma-separated |
+| `--interactive`, `-i` | Start the guided wizard |
+| `--json` | Emit a JSON plan/result |
 
----
+For an isolated installation, use a new temporary directory and inspect its links. Do not point the command at system directories. The CLI makes no promise that other tools or running sessions will accept the selected configuration.
 
-## Supported Components
+## Theme and profile selection
 
-| Component | Target Directory | Description |
-|-----------|------------------|-------------|
-| `hypr` | `<dest>/hypr` | Hyprland compositor, themes, autostart, hyprlock, and wallpapers |
-| `waybar` | `<dest>/waybar` | Waybar status bar, layouts, GTK3 CSS, and telemetry scripts |
-| `rofi` | `<dest>/rofi` | Rofi app launcher, power menu, clipboard manager, and glass theme |
-| `swaync` | `<dest>/swaync` | SwayNC notification daemon and control center stylesheet |
-| `kitty` | `<dest>/kitty` | Kitty terminal emulator configuration and theme tokens |
-| `wlogout` | `<dest>/wlogout` | Wlogout logout dialog layout and CSS styling |
-
----
-
-## Command Options
-
-| Flag | Short | Default | Description |
-|------|-------|---------|-------------|
-| `--interactive` | `-i` | `false` | Launch interactive guided installation wizard |
-| `--dry-run` | | `false` | Simulate installation without modifying the filesystem |
-| `--dest` | `--target` | `~/.config` | Target configuration directory |
-| `--components` | `-c` | all | Comma-separated list of components to install |
-| `--skip` | `-s` | none | Comma-separated list of components to skip |
-| `--json` | | `false` | Emit structured JSON output |
+The interactive flow applies the selected theme and optional profile after linking. The theme compiler writes generated theme files and state under the destination. Profile application writes override files and profile state. These operations have their own path and overwrite behavior; see [CLI reference](cli.md), [themes](themes.md), and [profiles](profiles.md) before selecting them for an existing configuration.

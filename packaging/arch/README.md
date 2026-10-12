@@ -40,6 +40,8 @@ sudo pacman -U obsyx-git-*.pkg.tar.zst
    ```
 
 ### Publishing Steps
+The publishing helper regenerates `.SRCINFO` with `makepkg` and checks AUR SSH authentication. Even `--dry-run` requires those tools and credentials; it skips the final Git push but can update the local `.SRCINFO` file. Review the diff afterward.
+
 Run the automated publishing script:
 ```bash
 # Verify files without pushing:

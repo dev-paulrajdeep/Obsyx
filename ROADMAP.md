@@ -14,7 +14,7 @@ This roadmap covers two related but distinct products:
 - **Obsyx Desktop:** a modular, configurable desktop framework built around Hyprland, Lua, and a cohesive ecosystem of Wayland tools.
 - **Obsyx OS:** a bootable, installable **Arch-based Linux distribution** that integrates Obsyx Desktop with the base operating system, hardware support, installation, updates, security, and recovery.
 
-> **Current status:** Obsyx v0.1.0 has completed **Phase 1 (Foundation)** and delivered core milestones across **Phases 2 through 6** (Design Token Engine, Noctis Amethyst reference theme, Desktop Components, Obsyx CLI tooling, Hardware Profiles, Plugin Architecture, and Arch/CI packaging). The remaining desktop framework items and subsequent phases are actively tracked below. **Distro-specific engineering (Phases 8–13)** has not started and is planned as a separate workstream; completing dotfiles alone does not produce an operating system.
+> **Repository status:** This roadmap tracks implementation work represented in the repository; checked items are not a claim that every feature has been runtime-tested or externally released. The source contains the desktop configuration, token compiler, CLI, profiles, plugin hooks, Arch package recipe, and a GitHub Actions workflow. This repository snapshot does not establish that an AUR package or binary release has been published, or that CI/runtime checks passed. **Distro-specific engineering (Phases 8–13)** has not started; desktop configuration alone does not produce an operating system.
 
 ## Scope Boundary — Desktop Framework vs Operating System
 
@@ -301,18 +301,18 @@ Obsyx ships with **Noctis Amethyst** as its default reference theme alongside fi
 ## Packaging
 
 - [x] PKGBUILD
-- [x] AUR package
-- [x] Binary releases
-- [x] Semantic versioning
+- [x] AUR package recipe and publishing helper
+- [ ] Published binary releases *(a source archive/checksum helper exists; no release publishing workflow is present)*
+- [x] Version metadata and changelog
 - [x] Release notes
 
 ## Automation
 
 - [x] GitHub Actions
-- [x] Lua linting
-- [x] Code formatting
-- [x] Build verification
-- [x] Dependency validation
+- [x] Lua syntax validation
+- [ ] Automated code formatting
+- [ ] Package build verification in CI
+- [x] CLI dependency diagnostic
 - [ ] Automatic screenshots
 - [ ] Documentation deployment
 
@@ -320,7 +320,7 @@ Obsyx ships with **Noctis Amethyst** as its default reference theme alongside fi
 
 - [x] Configuration regression tests
 - [x] Theme validation tests
-- [x] Startup verification
+- [x] Headless startup verification script *(runtime result depends on the local Hyprland environment)*
 - [ ] Performance benchmarks
 - [ ] Memory profiling
 

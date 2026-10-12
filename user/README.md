@@ -6,7 +6,7 @@ The `user/` directory provides a **Git-clean extension point** for personalizing
 
 ## How It Works
 
-Any files matching `user/*.lua` or `user/*.jsonc` are ignored by Git. You can safely create and edit files here, knowing `git status` will remain completely clean and `git pull` will never conflict with your customizations.
+Local files matching `user/*.lua` or `user/*.jsonc` are ignored by Git. They do not appear as untracked changes, and ordinary updates will leave them in place. As with any ignored local file, an upstream change that starts tracking the same path may require you to move your local file before updating.
 
 ```mermaid
 flowchart LR
