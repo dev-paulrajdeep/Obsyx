@@ -237,11 +237,11 @@ Obsyx ships with **Noctis Amethyst** as its default reference theme alongside fi
 ## Command Line Interface
 
 - [x] `obsyx install`
-- [ ] `obsyx update`
+- [x] `obsyx update` *(clean Git checkout fast-forward; package-managed installs use the package manager)*
 - [x] `obsyx doctor`
 - [x] `obsyx theme` *(Official themes switcher and palette manager)*
-- [ ] `obsyx backup` *(built-in automated backups in `obsyx install`)*
-- [ ] `obsyx restore`
+- [x] `obsyx backup` *(portable config archive)*
+- [x] `obsyx restore` *(validated archive, pre-restore backup, dry-run)*
 - [x] `obsyx docgen` *(Keybindings cheatsheet & Rofi launcher generator)*
 - [x] `obsyx profile` *(Hardware profile switcher)*
 
@@ -252,8 +252,8 @@ Obsyx ships with **Noctis Amethyst** as its default reference theme alongside fi
 - [x] Theme development guide
 - [x] Plugin guide
 - [x] Lua API documentation
-- [ ] Screenshots
-- [ ] GIF demonstrations
+- [x] Conceptual desktop mockups *(labeled; not runtime captures)*
+- [x] Conceptual theme-cycle GIF *(labeled; not runtime recording)*
 
 ---
 

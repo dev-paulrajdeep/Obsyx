@@ -48,6 +48,42 @@ Creates symlinks for the supported component directories under the destination. 
 
 Options: `--dest`/`--target`, `--dry-run`, `--components`/`-c`, `--skip`/`-s`, `--interactive`/`-i`, and `--json`. The default component set is `hypr`, `waybar`, `rofi`, `swaync`, `kitty`, and `wlogout`.
 
+## `update`
+
+Updates the Obsyx source checkout using Git. It refuses to run if the working tree has tracked or untracked changes, if the branch has no upstream, or if the branch has diverged. Updates are fast-forward only. Package-managed copies without a Git checkout must be updated through the package manager.
+
+```bash
+./bin/obsyx update --check
+./bin/obsyx update
+./bin/obsyx update --json
+```
+
+`--check` fetches the upstream and compares commit counts without changing tracked files; it does update local Git remote-tracking metadata and needs network access. Running without `--check` fast-forwards the checkout when the local branch has no unique commits. Exit status is nonzero for dirty trees, unsupported installs, fetch/compare errors, or divergence.
+
+## `backup`
+
+Creates a compressed archive of selected Obsyx config directories and state (`obsyx/`, `.obsyx_theme`, `.obsyx_profile` when present). By default, the source is `$XDG_CONFIG_HOME` or `~/.config`, and the archive is saved under `$XDG_STATE_HOME/obsyx/backups` or `~/.local/state/obsyx/backups`.
+
+```bash
+./bin/obsyx backup
+./bin/obsyx backup --source /tmp/obsyx-config --components hypr,waybar
+./bin/obsyx backup --output /tmp/before-change.tar.gz --json
+```
+
+Options: `--source`, `--output`/`-o`, `--components`/`-c`, and `--json`. Existing output paths are never overwritten. Config symlinks at the selected top level are backed up by content; nested symlinks are omitted and listed in `manifest.json` so they are not followed outside the config tree.
+
+## `restore`
+
+Restores an archive created by `obsyx backup`. The archive is validated before writing; absolute paths, traversal paths, links, special files, unlisted entries, oversized archives, and unsupported formats are rejected. Existing target entries are first captured in a safety archive, then moved aside as `.pre-restore.<timestamp>` before the restored entries are installed.
+
+```bash
+./bin/obsyx restore ~/.local/state/obsyx/backups/obsyx-config-20261013_120000.tar.gz --dry-run
+./bin/obsyx restore /path/to/backup.tar.gz
+./bin/obsyx restore /path/to/backup.tar.gz --dest /tmp/obsyx-restore --json
+```
+
+The command requires a readable `obsyx-config-backup` archive and refuses malformed inputs. `--dry-run` validates and prints target paths without creating the destination or safety backup. Restore always creates a pre-restore archive when any target already exists.
+
 ## `theme`
 
 Lists and displays the five official themes or compiles one into files under the destination. Applying a theme writes marker/state files and generated theme artifacts, then attempts reload signals for running components. Reload commands are best-effort; a successful CLI exit does not prove that each application accepted the result.

@@ -11,12 +11,17 @@ Usage:
 import argparse
 from datetime import datetime
 import glob
+import io
 import json
 import os
+import posixpath
 import re
 import shutil
+import stat
 import subprocess
 import sys
+import tarfile
+import tempfile
 
 VERSION = "0.1.0"
 
@@ -785,6 +790,374 @@ def run_install(args) -> int:
             print()
 
     print()
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# Update, Backup & Restore
+# ---------------------------------------------------------------------------
+
+BACKUP_ENTRIES = set(SUPPORTED_COMPONENTS) | {"obsyx", ".obsyx_theme", ".obsyx_profile"}
+BACKUP_FORMAT_VERSION = 1
+
+
+def config_root(raw_path=None) -> str:
+    """Resolve a config directory using the standard XDG fallback."""
+    path = raw_path or os.environ.get("XDG_CONFIG_HOME") or os.path.join(os.path.expanduser("~"), ".config")
+    return os.path.abspath(os.path.expanduser(path))
+
+
+def _git(repo_root: str, *command: str):
+    full_command = ["git", *command]
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    try:
+        return subprocess.run(
+            full_command, cwd=repo_root, env=env, capture_output=True, text=True,
+            check=False, timeout=120,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(full_command, 124, "", "Git command timed out after 120 seconds.")
+
+
+def run_update(args) -> int:
+    """Fast-forward a clean source checkout; never update package-managed files."""
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    as_json = getattr(args, "json", False)
+
+    def finish(status, message, code=0, **details):
+        if as_json:
+            print(json.dumps({"status": status, "message": message, **details}, indent=2))
+        else:
+            color = green if code == 0 else red
+            print(color(message))
+        return code
+
+    if not os.path.isdir(os.path.join(repo_root, ".git")) and not os.path.isfile(os.path.join(repo_root, ".git")):
+        return finish(
+            "unsupported", "This Obsyx copy is not a Git checkout; update it with your package manager.",
+            1, repository=repo_root,
+        )
+    if not shutil.which("git"):
+        return finish("error", "Git is required to update a source checkout.", 1)
+
+    status = _git(repo_root, "status", "--porcelain", "--untracked-files=all")
+    if status.returncode != 0:
+        return finish("error", status.stderr.strip() or "Could not inspect Git working tree.", 1)
+    if status.stdout.strip():
+        return finish(
+            "dirty", "Update refused: commit, stash, or remove local changes before updating.",
+            1, repository=repo_root, changes=status.stdout.splitlines(),
+        )
+
+    upstream = _git(repo_root, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}")
+    if upstream.returncode != 0 or not upstream.stdout.strip():
+        return finish("unsupported", "This branch has no configured upstream; set one before updating.", 1)
+    upstream_ref = upstream.stdout.strip()
+
+    fetched = _git(repo_root, "fetch", "--prune")
+    if fetched.returncode != 0:
+        return finish("error", fetched.stderr.strip() or "Git fetch failed.", 1, upstream=upstream_ref)
+
+    counts = _git(repo_root, "rev-list", "--left-right", "--count", f"HEAD...{upstream_ref}")
+    if counts.returncode != 0:
+        return finish("error", counts.stderr.strip() or "Could not compare local and upstream commits.", 1)
+    try:
+        ahead, behind = (int(value) for value in counts.stdout.split())
+    except (TypeError, ValueError):
+        return finish("error", "Git returned an invalid upstream comparison.", 1)
+
+    if behind == 0:
+        message = "Obsyx is up to date." if ahead == 0 else f"Local branch is {ahead} commit(s) ahead of upstream."
+        return finish("ok", message, repository=repo_root, upstream=upstream_ref, ahead=ahead, behind=behind)
+    if ahead:
+        return finish(
+            "diverged", f"Update refused: local branch and upstream have diverged ({ahead} ahead, {behind} behind).",
+            1, repository=repo_root, upstream=upstream_ref, ahead=ahead, behind=behind,
+        )
+    if getattr(args, "check", False):
+        return finish(
+            "available", f"{behind} update(s) available; run `obsyx update` to fast-forward.",
+            repository=repo_root, upstream=upstream_ref, ahead=ahead, behind=behind,
+        )
+
+    merged = _git(repo_root, "merge", "--ff-only", upstream_ref)
+    if merged.returncode != 0:
+        return finish("error", merged.stderr.strip() or "Fast-forward update failed.", 1)
+    return finish(
+        "updated", merged.stdout.strip() or f"Updated Obsyx by {behind} commit(s).",
+        repository=repo_root, upstream=upstream_ref, ahead=0, behind=behind,
+    )
+
+
+def _backup_directory() -> str:
+    state_home = os.environ.get("XDG_STATE_HOME") or os.path.join(os.path.expanduser("~"), ".local", "state")
+    return os.path.join(os.path.abspath(os.path.expanduser(state_home)), "obsyx", "backups")
+
+
+def _unique_path(path: str) -> str:
+    if not os.path.lexists(path):
+        return path
+    index = 1
+    while os.path.lexists(f"{path}.{index}"):
+        index += 1
+    return f"{path}.{index}"
+
+
+def _selected_backup_entries(source_root: str, components=None):
+    names = list(SUPPORTED_COMPONENTS) if components is None else components
+    invalid = sorted(set(names) - set(SUPPORTED_COMPONENTS))
+    if invalid:
+        raise ValueError(f"Unknown component(s): {', '.join(invalid)}")
+    entries = [name for name in names if os.path.lexists(os.path.join(source_root, name))]
+    entries.extend(name for name in ("obsyx", ".obsyx_theme", ".obsyx_profile")
+                   if os.path.lexists(os.path.join(source_root, name)))
+    entries = list(dict.fromkeys(entries))
+    if not entries:
+        raise ValueError(f"No Obsyx configuration entries found in {source_root}")
+    return entries
+
+
+def create_backup(source_root: str, output_path=None, components=None) -> tuple[str, dict]:
+    """Create a portable archive; top-level config links are backed up by content."""
+    source_root = os.path.abspath(os.path.expanduser(source_root))
+    entries = _selected_backup_entries(source_root, components)
+    timestamp = datetime.now().astimezone().isoformat(timespec="seconds")
+    skipped_links = []
+    for entry in entries:
+        entry_path = os.path.realpath(os.path.join(source_root, entry))
+        for root, dirs, files in os.walk(entry_path, followlinks=False):
+            for name in list(dirs) + files:
+                candidate = os.path.join(root, name)
+                if os.path.islink(candidate):
+                    skipped_links.append(f"{entry}/{os.path.relpath(candidate, entry_path).replace(os.sep, '/')}")
+            dirs[:] = [name for name in dirs if not os.path.islink(os.path.join(root, name))]
+    skipped_links.sort()
+    manifest = {
+        "format": "obsyx-config-backup",
+        "format_version": BACKUP_FORMAT_VERSION,
+        "created_at": timestamp,
+        "source": source_root,
+        "entries": entries,
+        "skipped_symlinks": skipped_links,
+    }
+
+    if output_path:
+        final_path = os.path.abspath(os.path.expanduser(output_path))
+        os.makedirs(os.path.dirname(final_path) or ".", exist_ok=True)
+    else:
+        backup_dir = _backup_directory()
+        os.makedirs(backup_dir, mode=0o700, exist_ok=True)
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        final_path = os.path.join(backup_dir, f"obsyx-config-{stamp}.tar.gz")
+        final_path = _unique_path(final_path)
+    if os.path.lexists(final_path):
+        raise FileExistsError(f"Backup output already exists: {final_path}")
+
+    temp_fd, temp_path = tempfile.mkstemp(prefix=".obsyx-backup-", suffix=".tmp", dir=os.path.dirname(final_path) or ".")
+    os.close(temp_fd)
+    try:
+        with tarfile.open(temp_path, "w:gz", format=tarfile.PAX_FORMAT) as archive:
+            manifest_bytes = json.dumps(manifest, indent=2).encode("utf-8")
+            info = tarfile.TarInfo("manifest.json")
+            info.size = len(manifest_bytes)
+            info.mode = 0o600
+            archive.addfile(info, io.BytesIO(manifest_bytes))
+
+            for entry in entries:
+                path = os.path.join(source_root, entry)
+                # Follow the selected top-level XDG link, if present, so a linked
+                # Obsyx config is backed up as its effective content.
+                archive.add(os.path.realpath(path), arcname=entry, recursive=True,
+                           filter=lambda member: _backup_filter(member, entry, skipped_links))
+        os.chmod(temp_path, 0o600)
+        os.replace(temp_path, final_path)
+    except Exception:
+        try:
+            os.unlink(temp_path)
+        except OSError:
+            pass
+        raise
+    return final_path, manifest
+
+
+def _backup_filter(member, entry, skipped_links):
+    if member.issym() or member.islnk():
+        if member.name not in skipped_links:
+            skipped_links.append(member.name)
+        return None
+    if not (member.isdir() or member.isfile()):
+        return None
+    member.uid = member.gid = 0
+    member.uname = member.gname = ""
+    return member
+
+
+def run_backup(args) -> int:
+    source_root = config_root(getattr(args, "source", None))
+    try:
+        components = None
+        if getattr(args, "components", None):
+            components = [part.strip().lower() for part in args.components.split(",") if part.strip()]
+        archive_path, manifest = create_backup(source_root, getattr(args, "output", None), components)
+    except (OSError, ValueError, tarfile.TarError) as error:
+        print(red(f"Backup failed: {error}"), file=sys.stderr)
+        return 1
+
+    if getattr(args, "json", False):
+        print(json.dumps({"status": "ok", "archive": archive_path, "manifest": manifest}, indent=2))
+    else:
+        print(green(f"Backup created: {archive_path}"))
+        print(f"Entries: {', '.join(manifest['entries'])}")
+        if manifest["skipped_symlinks"]:
+            print(yellow(f"Skipped symlinks: {len(manifest['skipped_symlinks'])} (listed in manifest.json)"))
+    return 0
+
+
+def _read_backup(archive_path: str):
+    with tarfile.open(archive_path, "r:gz") as archive:
+        members = archive.getmembers()
+        manifest_members = [m for m in members if m.name == "manifest.json"]
+        if len(manifest_members) != 1 or not manifest_members[0].isfile():
+            raise ValueError("Archive must contain one regular manifest.json")
+        manifest_stream = archive.extractfile(manifest_members[0])
+        if manifest_members[0].size > 1024 * 1024:
+            raise ValueError("Backup manifest is too large")
+        manifest = json.load(manifest_stream)
+        if not isinstance(manifest, dict):
+            raise ValueError("Backup manifest must be a JSON object")
+        if manifest.get("format") != "obsyx-config-backup" or manifest.get("format_version") != BACKUP_FORMAT_VERSION:
+            raise ValueError("Unsupported Obsyx backup format")
+        entries = manifest.get("entries")
+        if (not isinstance(entries, list) or not entries
+                or any(not isinstance(e, str) or e not in BACKUP_ENTRIES for e in entries)
+                or len(entries) != len(set(entries))):
+            raise ValueError("Backup manifest contains invalid entries")
+
+        seen = set()
+        payload = []
+        total_size = 0
+        if len(members) > 100_000:
+            raise ValueError("Backup contains too many archive members")
+        for member in members:
+            name = member.name.rstrip("/")
+            if member.name == "manifest.json":
+                continue
+            if name == "manifest.json":
+                raise ValueError("Archive contains an invalid manifest path")
+            if not name or name.startswith("/") or "\\" in name:
+                raise ValueError(f"Unsafe archive path: {member.name}")
+            parts = name.split("/")
+            if any(part in ("", ".", "..") for part in parts):
+                raise ValueError(f"Unsafe archive path: {member.name}")
+            if parts[0] not in entries:
+                raise ValueError(f"Archive contains unlisted entry: {member.name}")
+            if name in seen:
+                raise ValueError(f"Duplicate archive path: {member.name}")
+            seen.add(name)
+            if member.issym() or member.islnk() or not (member.isfile() or member.isdir()):
+                raise ValueError(f"Unsupported archive object: {member.name}")
+            total_size += member.size
+            if total_size > 512 * 1024 * 1024:
+                raise ValueError("Backup expands beyond the 512 MiB safety limit")
+            payload.append(member)
+
+        for entry in entries:
+            if not any(m.name.rstrip("/") == entry or m.name.rstrip("/").startswith(entry + "/") for m in payload):
+                raise ValueError(f"Archive is missing manifest entry: {entry}")
+        return manifest, payload
+
+
+def _extract_validated(archive_path: str, stage_root: str, members):
+    with tarfile.open(archive_path, "r:gz") as archive:
+        for member in members:
+            parts = member.name.rstrip("/").split("/")
+            target = os.path.join(stage_root, *parts)
+            if member.isdir():
+                os.makedirs(target, mode=0o755, exist_ok=True)
+                continue
+            os.makedirs(os.path.dirname(target), mode=0o755, exist_ok=True)
+            source = archive.extractfile(member)
+            if source is None:
+                raise ValueError(f"Could not read archive member: {member.name}")
+            with source, open(target, "xb") as dest:
+                shutil.copyfileobj(source, dest)
+            os.chmod(target, stat.S_IMODE(member.mode) & 0o777)
+
+
+def run_restore(args) -> int:
+    archive_path = os.path.abspath(os.path.expanduser(args.archive))
+    dest_root = config_root(getattr(args, "dest", None))
+    try:
+        manifest, members = _read_backup(archive_path)
+    except (OSError, ValueError, tarfile.TarError, json.JSONDecodeError) as error:
+        print(red(f"Restore refused: {error}"), file=sys.stderr)
+        return 1
+
+    if getattr(args, "dry_run", False):
+        existing_entries = [entry for entry in manifest["entries"]
+                            if os.path.lexists(os.path.join(dest_root, entry))]
+        output = {"status": "preview", "archive": archive_path, "destination": dest_root,
+                  "entries": manifest["entries"], "existing_targets": existing_entries,
+                  "pre_restore_backup_required": bool(existing_entries)}
+        if getattr(args, "json", False):
+            print(json.dumps(output, indent=2))
+        else:
+            print("Restore preview (no files changed):")
+            for entry in manifest["entries"]:
+                print(f"  {os.path.join(dest_root, entry)}")
+            if existing_entries:
+                print("A backup of existing targets will be created before restore.")
+        return 0
+
+    os.makedirs(dest_root, mode=0o700, exist_ok=True)
+    stage_root = tempfile.mkdtemp(prefix=".obsyx-restore-", dir=dest_root)
+    try:
+        _extract_validated(archive_path, stage_root, members)
+        existing_entries = [entry for entry in manifest["entries"]
+                           if os.path.lexists(os.path.join(dest_root, entry))]
+        safety_archive = None
+        if existing_entries:
+            safety_archive, _ = create_backup(dest_root, components=[e for e in existing_entries if e in SUPPORTED_COMPONENTS])
+            # create_backup also includes state entries when present, matching what it archives.
+
+        moved = {}
+        installed = []
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        try:
+            for entry in manifest["entries"]:
+                target = os.path.join(dest_root, entry)
+                if os.path.lexists(target):
+                    backup_target = _unique_path(f"{target}.pre-restore.{stamp}")
+                    os.replace(target, backup_target)
+                    moved[entry] = backup_target
+                staged = os.path.join(stage_root, entry)
+                os.replace(staged, target)
+                installed.append(entry)
+        except Exception:
+            for entry in reversed(installed):
+                target = os.path.join(dest_root, entry)
+                staged = os.path.join(stage_root, entry)
+                if os.path.lexists(target):
+                    os.replace(target, staged)
+            for entry, backup_target in moved.items():
+                if os.path.lexists(backup_target):
+                    os.replace(backup_target, os.path.join(dest_root, entry))
+            raise
+    except (OSError, ValueError, tarfile.TarError) as error:
+        print(red(f"Restore failed: {error}"), file=sys.stderr)
+        return 1
+    finally:
+        shutil.rmtree(stage_root, ignore_errors=True)
+
+    result = {"status": "ok", "archive": archive_path, "destination": dest_root,
+              "entries": manifest["entries"], "pre_restore_backup": safety_archive}
+    if getattr(args, "json", False):
+        print(json.dumps(result, indent=2))
+    else:
+        print(green(f"Restored {', '.join(manifest['entries'])} to {dest_root}"))
+        if safety_archive:
+            print(f"Pre-restore backup: {safety_archive}")
     return 0
 
 
@@ -1777,6 +2150,24 @@ def main():
     ins_parser.add_argument("--interactive", "-i", action="store_true", help="Launch interactive guided installation wizard.")
     ins_parser.add_argument("--json", action="store_true", help="Output installation plan/result as JSON.")
 
+    # Update
+    update_parser = subparsers.add_parser("update", help="Fast-forward a clean Git checkout of Obsyx.")
+    update_parser.add_argument("--check", action="store_true", help="Fetch and report available updates without changing tracked files.")
+    update_parser.add_argument("--json", action="store_true", help="Output update status as JSON.")
+
+    # Backup and restore
+    backup_parser = subparsers.add_parser("backup", help="Create an archive of Obsyx configuration and state.")
+    backup_parser.add_argument("--source", help="Configuration directory to back up (default: XDG config directory).")
+    backup_parser.add_argument("--output", "-o", help="Archive path (default: XDG state backup directory).")
+    backup_parser.add_argument("--components", "-c", help="Comma-separated components to include (default: all found).")
+    backup_parser.add_argument("--json", action="store_true", help="Output archive path and manifest as JSON.")
+
+    restore_parser = subparsers.add_parser("restore", help="Safely restore a validated Obsyx configuration backup.")
+    restore_parser.add_argument("archive", help="Path to an archive created by `obsyx backup`.")
+    restore_parser.add_argument("--dest", "--target", dest="dest", help="Restore destination (default: XDG config directory).")
+    restore_parser.add_argument("--dry-run", action="store_true", help="Validate and preview without changing files.")
+    restore_parser.add_argument("--json", action="store_true", help="Output restore plan/result as JSON.")
+
     # Docgen
     docgen_parser = subparsers.add_parser("docgen", help="Generate keybindings cheatsheet (KEYBINDINGS.md) and Rofi search script.")
     docgen_parser.add_argument("--output", "-o", help="Target markdown cheatsheet output path (default: KEYBINDINGS.md).")
@@ -1844,6 +2235,12 @@ def main():
         sys.exit(run_validate(args))
     elif args.command == "install":
         sys.exit(run_install(args))
+    elif args.command == "update":
+        sys.exit(run_update(args))
+    elif args.command == "backup":
+        sys.exit(run_backup(args))
+    elif args.command == "restore":
+        sys.exit(run_restore(args))
     elif args.command == "docgen":
         sys.exit(run_docgen(args))
     elif args.command == "profile":

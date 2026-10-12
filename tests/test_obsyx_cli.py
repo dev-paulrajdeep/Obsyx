@@ -33,6 +33,8 @@ class TestCliInterface(unittest.TestCase):
         self.assertEqual(rc, 0, f'CLI --help failed:\n{stderr}')
         self.assertIn('doctor', stdout)
         self.assertIn('validate', stdout)
+        for command in ('update', 'backup', 'restore'):
+            self.assertIn(command, stdout)
 
     def test_cli_version(self):
         rc, stdout, stderr = _run_cli('--version')

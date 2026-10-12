@@ -1,6 +1,6 @@
 # Obsyx User Overrides Framework
 
-The `user/` directory provides a **Git-clean extension point** for personalizing your Obsyx desktop environment without modifying tracked files or creating git merge conflicts when updating Obsyx.
+The `user/` directory provides a Git-ignored extension point for personalizing Obsyx without modifying tracked core configuration. See the [plugin guide](../docs/plugins.md) and [Lua API reference](../docs/lua-api.md) for details.
 
 ---
 

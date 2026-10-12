@@ -54,6 +54,8 @@ The installer manages configuration links; it does not install dependencies. Rea
 ./bin/obsyx theme apply frost --dry-run
 ./bin/obsyx profile list
 ./bin/obsyx profile apply laptop --dry-run
+./bin/obsyx backup
+./bin/obsyx update --check
 ./bin/obsyx docgen --check
 ```
 
@@ -66,7 +68,7 @@ Use `./bin/obsyx --help` or see the [CLI reference](docs/cli.md) for all command
 - Laptop and workstation profile overrides.
 - Waybar modules and telemetry scripts, Rofi launcher and utility menus, SwayNC styles, Hyprlock, Kitty, and Wlogout configuration.
 - Plugin registration and lifecycle callbacks for initialization, theme changes, profile changes, and workspace changes. Plugins execute Lua code in the desktop process; the framework does not provide a plugin permission sandbox.
-- `doctor`, `validate`, `install`, `theme`, `profile`, and `docgen` commands.
+- `doctor`, `validate`, `install`, `update`, `backup`, `restore`, `theme`, `profile`, and `docgen` commands.
 
 See [Themes](docs/themes.md), [Theme tokens](docs/theme-tokens.md), [Profiles](docs/profiles.md), [Autostart and wallpapers](docs/autostart-and-wallpapers.md), and [User overrides](user/README.md).
 
@@ -102,6 +104,11 @@ The test suite includes Python-driven checks and a headless Wayland integration 
 - [Theme token compiler](docs/theme-tokens.md)
 - [Hardware profiles](docs/profiles.md)
 - [Autostart and wallpapers](docs/autostart-and-wallpapers.md)
+- [Architecture](docs/architecture.md)
+- [Configuration reference](docs/configuration-reference.md)
+- [Plugin guide](docs/plugins.md)
+- [Lua API reference](docs/lua-api.md)
+- [Concept mockups and GIF](docs/mockups.md)
 - [Keybindings](KEYBINDINGS.md)
 - [Roadmap and product scope](ROADMAP.md)
 
