@@ -155,7 +155,7 @@ Obsyx OS additionally needs the system layers that dotfiles do not provide:
 - [x] Icon theme
 - [x] Font stack
 - [x] Terminal theme
-- [ ] VS Code theme
+- [x] VS Code theme
 - [ ] Browser theme
 
 ---
