@@ -220,7 +220,7 @@ Obsyx ships with **Noctis Amethyst** as its default reference theme alongside fi
 
 ## Installer
 
-- [ ] Interactive installer
+- [x] Interactive installer
 - [x] Minimal installation
 - [x] Full installation
 - [x] Package detection

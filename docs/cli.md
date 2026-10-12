@@ -67,7 +67,8 @@ Automates comprehensive syntax, structure, and integrity checks across the entir
 
 ### 3. `obsyx install`
 
-Safely deploys Obsyx configuration components into target user dotfiles directory with automated timestamped backups and dry-run simulation:
+Safely deploys Obsyx configuration components into target user dotfiles directory with automated timestamped backups, interactive setup wizard, and dry-run simulation:
+- **`--interactive` / `-i`**: Launch guided interactive setup wizard with presets and hardware tuning.
 - **`--dry-run`**: Simulate deployment without touching filesystem.
 - **`--dest PATH`**: Destination target (defaults to `~/.config`).
 - **`--components COMP1,COMP2`**: Selectively install components (`hypr`, `waybar`, `rofi`, `swaync`, `kitty`, `wlogout`).
@@ -77,6 +78,9 @@ Safely deploys Obsyx configuration components into target user dotfiles director
 #### Usage
 
 ```bash
+# Interactive guided setup wizard
+./bin/obsyx install --interactive
+
 # Dry-run preview
 ./bin/obsyx install --dry-run
 

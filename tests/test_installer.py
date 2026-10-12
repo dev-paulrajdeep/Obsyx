@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -13,17 +14,17 @@ CLI_BIN = os.path.join(REPO_ROOT, 'bin', 'obsyx')
 INSTALL_SH = os.path.join(REPO_ROOT, 'tools', 'install.sh')
 
 
-def _run_cli(*args):
+def _run_cli(*args, input_data=None):
     """Run bin/obsyx with specified arguments."""
     cmd = [CLI_BIN] + list(args)
-    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO_ROOT)
+    proc = subprocess.run(cmd, input=input_data, capture_output=True, text=True, cwd=REPO_ROOT)
     return proc.returncode, proc.stdout, proc.stderr
 
 
-def _run_install_sh(*args):
+def _run_install_sh(*args, input_data=None):
     """Run tools/install.sh with specified arguments."""
     cmd = [INSTALL_SH] + list(args)
-    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO_ROOT)
+    proc = subprocess.run(cmd, input=input_data, capture_output=True, text=True, cwd=REPO_ROOT)
     return proc.returncode, proc.stdout, proc.stderr
 
 
@@ -147,6 +148,141 @@ class TestInstallShWrapper(unittest.TestCase):
             self.assertEqual(rc, 0, f'tools/install.sh --dry-run failed:\n{stderr}')
             self.assertIn('DRY RUN', stdout)
             self.assertEqual(os.listdir(sandbox), [])
+
+
+
+class TestInstallerInteractive(unittest.TestCase):
+    """Verify interactive wizard mode (bin/obsyx install --interactive)."""
+
+    @classmethod
+    def tearDownClass(cls):
+        # Restore repository to default reference theme (noctis_amethyst) so subsequent tests see clean tokens
+        subprocess.run(
+            [sys.executable, os.path.join(REPO_ROOT, "tools", "build_tokens.py")],
+            cwd=REPO_ROOT,
+            capture_output=True,
+        )
+
+    def test_interactive_full_install(self):
+        with tempfile.TemporaryDirectory() as sandbox:
+            # Inputs:
+            # Step 2: dest -> sandbox
+            # Step 3: preset -> 1 (full)
+            # Step 4: theme -> 1 (noctis_amethyst)
+            # Step 5: profile -> 1 (default)
+            # Step 6: confirm -> 1 (install)
+            inputs = f"{sandbox}\n1\n1\n1\n1\n"
+            rc, stdout, stderr = _run_cli('install', '--interactive', input_data=inputs)
+            self.assertEqual(rc, 0, f"Interactive full install failed:\n{stdout}\n{stderr}")
+
+            # Verify components
+            for comp in ('hypr', 'waybar', 'rofi', 'swaync', 'kitty', 'wlogout'):
+                dest_path = os.path.join(sandbox, comp)
+                self.assertTrue(os.path.islink(dest_path), f"Expected symlink at {dest_path}")
+                target = os.path.realpath(dest_path)
+                expected_target = os.path.realpath(os.path.join(REPO_ROOT, comp))
+                self.assertEqual(target, expected_target)
+
+            # Verify active theme state
+            state_file = os.path.join(sandbox, '.obsyx_theme')
+            self.assertTrue(os.path.isfile(state_file))
+            with open(state_file, 'r') as f:
+                state = json.load(f)
+            self.assertEqual(state.get('active_theme'), 'noctis_amethyst')
+
+            # Verify Next Steps banner
+            self.assertIn('Next Steps & Quick Start', stdout)
+
+    def test_interactive_minimal_install(self):
+        with tempfile.TemporaryDirectory() as sandbox:
+            # Inputs:
+            # Step 2: dest -> sandbox
+            # Step 3: preset -> 2 (minimal)
+            # Step 4: theme -> 2 (obsidian)
+            # Step 5: profile -> 1 (default)
+            # Step 6: confirm -> 1 (install)
+            inputs = f"{sandbox}\n2\n2\n1\n1\n"
+            rc, stdout, stderr = _run_cli('install', '-i', input_data=inputs)
+            self.assertEqual(rc, 0, f"Interactive minimal install failed:\n{stdout}\n{stderr}")
+
+            # Verify hypr and waybar linked
+            self.assertTrue(os.path.islink(os.path.join(sandbox, 'hypr')))
+            self.assertTrue(os.path.islink(os.path.join(sandbox, 'waybar')))
+
+            # Verify other components NOT linked and directories NOT created
+            for excluded in ('rofi', 'swaync', 'kitty', 'wlogout'):
+                self.assertFalse(os.path.exists(os.path.join(sandbox, excluded)), f"{excluded} should not exist in minimal preset")
+
+            # Verify theme tokens were scoped
+            self.assertTrue(os.path.isfile(os.path.join(sandbox, 'hypr', 'themes', 'obsidian.lua')))
+            self.assertTrue(os.path.isfile(os.path.join(sandbox, 'waybar', 'generated', 'theme-tokens.css')))
+
+            # Verify state
+            state_file = os.path.join(sandbox, '.obsyx_theme')
+            self.assertTrue(os.path.isfile(state_file))
+            with open(state_file, 'r') as f:
+                state = json.load(f)
+            self.assertEqual(state.get('active_theme'), 'obsidian')
+
+    def test_interactive_custom_install(self):
+        with tempfile.TemporaryDirectory() as sandbox:
+            # Inputs:
+            # Step 2: dest -> sandbox
+            # Step 3: preset -> 3 (custom)
+            # Components prompt:
+            #   hypr -> y
+            #   waybar -> n
+            #   rofi -> y
+            #   swaync -> n
+            #   kitty -> y
+            #   wlogout -> n
+            # Step 4: theme -> 3 (frost)
+            # Step 5: profile -> 1 (default)
+            # Step 6: confirm -> 1 (install)
+            inputs = f"{sandbox}\n3\ny\nn\ny\nn\ny\nn\n3\n1\n1\n"
+            rc, stdout, stderr = _run_cli('install', '-i', input_data=inputs)
+            self.assertEqual(rc, 0, f"Interactive custom install failed:\n{stdout}\n{stderr}")
+
+            self.assertTrue(os.path.islink(os.path.join(sandbox, 'hypr')))
+            self.assertFalse(os.path.exists(os.path.join(sandbox, 'waybar')))
+            self.assertTrue(os.path.islink(os.path.join(sandbox, 'rofi')))
+            self.assertFalse(os.path.exists(os.path.join(sandbox, 'swaync')))
+            self.assertTrue(os.path.islink(os.path.join(sandbox, 'kitty')))
+            self.assertFalse(os.path.exists(os.path.join(sandbox, 'wlogout')))
+
+            # Check theme
+            state_file = os.path.join(sandbox, '.obsyx_theme')
+            with open(state_file, 'r') as f:
+                state = json.load(f)
+            self.assertEqual(state.get('active_theme'), 'frost')
+
+    def test_interactive_dry_run_simulation(self):
+        with tempfile.TemporaryDirectory() as sandbox:
+            # Inputs:
+            # Step 2: dest -> sandbox
+            # Step 3: preset -> 1 (full)
+            # Step 4: theme -> 1 (noctis_amethyst)
+            # Step 5: profile -> 1 (default)
+            # Step 6: confirm -> 2 (dry_run)
+            inputs = f"{sandbox}\n1\n1\n1\n2\n"
+            rc, stdout, stderr = _run_cli('install', '--interactive', input_data=inputs)
+            self.assertEqual(rc, 0, f"Interactive dry-run failed:\n{stdout}\n{stderr}")
+            self.assertIn('DRY RUN', stdout)
+            self.assertEqual(os.listdir(sandbox), [], f"Sandbox modified in dry-run: {os.listdir(sandbox)}")
+
+    def test_interactive_cancellation(self):
+        with tempfile.TemporaryDirectory() as sandbox:
+            # Inputs:
+            # Step 2: dest -> sandbox
+            # Step 3: preset -> 1 (full)
+            # Step 4: theme -> 1 (noctis_amethyst)
+            # Step 5: profile -> 1 (default)
+            # Step 6: confirm -> 3 (cancel)
+            inputs = f"{sandbox}\n1\n1\n1\n3\n"
+            rc, stdout, stderr = _run_cli('install', '--interactive', input_data=inputs)
+            self.assertEqual(rc, 0, f"Interactive cancel failed:\n{stdout}\n{stderr}")
+            self.assertIn('aborted by user', stdout)
+            self.assertEqual(os.listdir(sandbox), [], f"Sandbox modified upon cancel: {os.listdir(sandbox)}")
 
 
 if __name__ == '__main__':
