@@ -80,16 +80,16 @@ The project focuses on:
 
 # Goals
 
-Obsyx is evolving toward a complete desktop framework featuring:
+Obsyx provides a complete modular desktop framework featuring:
 
-- Theme engine
-- Design token system
-- Component library
-- Automated installer
-- Configuration validation
-- Documentation generator
-- Multiple desktop variants
-- Plugin support
+- [x] **Theme engine:** Canonical token system, multi-theme compiler, inheritance engine, and live switcher (`bin/obsyx theme`).
+- [x] **Design token system:** Single-source-of-truth tokens in `core/tokens/` generating CSS, RASI, Conf, and Lua tables.
+- [x] **Component library:** Cohesive Waybar status bar, Rofi menus, SwayNC notification center, Hyprlock, and Wlogout.
+- [x] **Automated installer:** `bin/obsyx install` with non-destructive backups, dry-run simulation, and component selection.
+- [x] **Configuration validation:** `bin/obsyx validate` verifying Lua, JSONC, Shell, and Design Token syntax.
+- [x] **Documentation generator:** `bin/obsyx docgen` compiling markdown cheatsheets and interactive Rofi search.
+- [x] **Multiple desktop variants:** `bin/obsyx profile` providing hardware-specific laptop and workstation profiles.
+- [x] **Plugin support:** `hypr/core/plugins.lua` lifecycle hooks (`on_init`, `on_theme_change`, `on_profile_change`, `on_workspace_change`) and user overrides.
 
 ---
 
@@ -97,14 +97,22 @@ Obsyx is evolving toward a complete desktop framework featuring:
 
 Current development stage:
 
-**Foundation Complete**
+**Phases 1–5 Complete (Desktop Framework & Official Themes) / Phase 6 Verified (Packaging & CI)**
 
-The core architecture is implemented and actively evolving toward a fully documented desktop framework.
+- **Phase 1 (Foundation):** Modular Lua architecture, central registry, autostart, window/workspace rules, animations.
+- **Phase 2 (Desktop Components):** Waybar status bar, Rofi launcher, SwayNC notifications/OSD, Hyprlock lock screen with idle daemon, and Wlogout.
+- **Phase 3 (Design System):** Five official themes (Noctis Amethyst, Obsidian, Frost, Aurora, Ember) with deterministic inheritance.
+- **Phase 4 (Developer Experience):** CLI suite (`doctor`, `validate`, `install`, `docgen`, `profile`, `theme`).
+- **Phase 5 (Extensibility):** Plugin architecture with lifecycle hooks and git-clean user overrides.
+- **Phase 6 (Packaging & Distribution):** PKGBUILD, AUR packaging, headless Wayland test runner, and automated GitHub Actions CI.
 
 See:
 
-- ROADMAP.md
-- CHANGELOG.md
+- [ROADMAP.md](ROADMAP.md)
+- [CHANGELOG.md](CHANGELOG.md)
+- [docs/themes.md](docs/themes.md)
+- [docs/cli.md](docs/cli.md)
+- [docs/profiles.md](docs/profiles.md)
 
 ---
 

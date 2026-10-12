@@ -90,7 +90,7 @@ Obsyx OS additionally needs the system layers that dotfiles do not provide:
 - [x] Active window title
 - [x] Media controls
 - [x] Volume widget
-- [ ] Brightness widget
+- [x] Brightness widget
 - [x] Battery widget
 - [x] Network widget
 - [x] Bluetooth widget
@@ -108,9 +108,9 @@ Obsyx OS additionally needs the system layers that dotfiles do not provide:
 - [x] Application launcher
 - [x] File launcher
 - [x] Power menu
-- [ ] Calculator mode
+- [x] Calculator mode
 - [x] Clipboard browser
-- [ ] Emoji picker
+- [x] Emoji picker
 - [x] Theme-aware styling
 - [x] Icon support
 - [x] Blur integration
@@ -119,25 +119,25 @@ Obsyx OS additionally needs the system layers that dotfiles do not provide:
 
 - [x] Notification center
 - [x] Control center
-- [ ] Volume OSD
-- [ ] Brightness OSD
+- [x] Volume OSD
+- [x] Brightness OSD
 - [ ] Screenshot preview
 
 ## Lock Screen
 
 - [x] Custom lock screen
 - [x] Background blur
-- [ ] Media widget
+- [x] Media widget
 - [x] User profile
 - [x] Time & date
-- [ ] Battery indicator
-- [ ] Idle integration
+- [x] Battery indicator
+- [x] Idle integration
 
 ## Logout Menu
 
 - [x] Themed logout interface
 - [x] Animated transitions
-- [ ] Icon redesign
+- [x] Icon redesign
 
 ## Wallpaper Engine
 
@@ -149,14 +149,14 @@ Obsyx OS additionally needs the system layers that dotfiles do not provide:
 
 ## Desktop Theme
 
-- [ ] GTK theme
-- [ ] Qt theme
+- [x] GTK theme
+- [x] Qt theme
 - [x] Cursor theme
 - [x] Icon theme
 - [x] Font stack
 - [x] Terminal theme
 - [x] VS Code theme
-- [ ] Browser theme
+- [x] Browser theme
 
 ---
 
