@@ -13,7 +13,26 @@ local function slugify(name)
     return (name:lower():gsub("%s+", "_"):gsub("[^%w_]", ""))
 end
 
-local theme_name = (Registry and Registry.Theme and Registry.Theme.name) or "Noctis Amethyst"
+local default_theme = "Noctis Amethyst"
+local theme_name = (Registry and Registry.Theme and Registry.Theme.name) or default_theme
+
+-- Check for persisted active theme override in XDG config
+if theme_name == default_theme then
+    local xdg = os.getenv("XDG_CONFIG_HOME")
+    if not xdg or xdg == "" then
+        xdg = (os.getenv("HOME") or "") .. "/.config"
+    end
+    local theme_file = xdg .. "/obsyx/theme"
+    local f = io.open(theme_file, "r")
+    if f then
+        local content = f:read("*l")
+        f:close()
+        if content and content:match("%S") then
+            theme_name = content:match("^%s*(.-)%s*$")
+        end
+    end
+end
+
 local theme_slug = slugify(theme_name)
 
 local ok, loaded_theme = pcall(require, "themes." .. theme_slug)

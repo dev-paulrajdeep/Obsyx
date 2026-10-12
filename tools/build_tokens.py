@@ -617,7 +617,7 @@ def deep_merge(target, source):
     return target
 
 def resolve_inheritance(tokens, token_file_path, visited=None):
-    """Resolve theme inheritance if the 'extends' key is present."""
+    """Resolve theme inheritance if the 'extends' or 'inherits' key is present."""
     if visited is None:
         visited = set()
 
@@ -626,14 +626,19 @@ def resolve_inheritance(tokens, token_file_path, visited=None):
         raise TokenError(f"Circular inheritance detected: {real_path}")
     visited.add(real_path)
 
-    if 'extends' not in tokens:
+    parent_key = tokens.get('extends') or tokens.get('inherits')
+    if not parent_key:
         return tokens
 
-    parent_file = tokens['extends']
+    if not parent_key.endswith('.json'):
+        parent_file = f"{parent_key}.json"
+    else:
+        parent_file = parent_key
+
     parent_path = os.path.join(os.path.dirname(token_file_path), parent_file)
 
     try:
-        with open(parent_path, 'r') as f:
+        with open(parent_path, 'r', encoding='utf-8') as f:
             parent_tokens = json.load(f)
     except FileNotFoundError:
         raise TokenError(f"Parent theme not found: {parent_path}")
@@ -644,8 +649,53 @@ def resolve_inheritance(tokens, token_file_path, visited=None):
     parent_tokens = resolve_inheritance(parent_tokens, parent_path, visited)
 
     # Merge parent into child (child overrides parent)
-    merged_tokens = deep_merge(tokens, parent_tokens)
+    merged_tokens = deep_merge(dict(tokens), parent_tokens)
     return merged_tokens
+
+
+def load_and_resolve_theme(token_file_path):
+    """Load JSON tokens from file path and resolve inheritance."""
+    try:
+        with open(token_file_path, 'r', encoding='utf-8') as f:
+            tokens = json.load(f)
+    except FileNotFoundError:
+        raise TokenError(f"Token source not found: {token_file_path}")
+    except json.JSONDecodeError as e:
+        raise TokenError(f"Malformed JSON in {token_file_path}: {e}")
+
+    tokens = resolve_inheritance(tokens, token_file_path)
+    validate_tokens(tokens)
+    return tokens
+
+
+def compile_theme_artifacts(tokens, output_dir=None, lua_out=None, css_out=None,
+                            rofi_out=None, swaync_out=None, hypr_conf_out=None,
+                            kitty_out=None, wlogout_out=None):
+    """Compile tokens into component files."""
+    slug = tokens["name"].lower().replace(" ", "_")
+    if output_dir:
+        lua_out = lua_out or os.path.join(output_dir, "hypr", "themes", f"{slug}.lua")
+        css_out = css_out or os.path.join(output_dir, "waybar", "generated", "theme-tokens.css")
+        rofi_out = rofi_out or os.path.join(output_dir, "rofi", "generated", "theme-tokens.rasi")
+        swaync_out = swaync_out or os.path.join(output_dir, "swaync", "generated", "theme-tokens.css")
+        hypr_conf_out = hypr_conf_out or os.path.join(output_dir, "hypr", "generated", "theme-tokens.conf")
+        kitty_out = kitty_out or os.path.join(output_dir, "kitty", "generated", "theme-tokens.conf")
+        wlogout_out = wlogout_out or os.path.join(output_dir, "wlogout", "generated", "theme-tokens.css")
+
+    if lua_out:
+        generate_lua(tokens, lua_out)
+    if css_out:
+        generate_css(tokens, css_out)
+    if rofi_out:
+        generate_rofi(tokens, rofi_out)
+    if swaync_out:
+        generate_css(tokens, swaync_out)
+    if hypr_conf_out:
+        generate_hypr_conf(tokens, hypr_conf_out)
+    if kitty_out:
+        generate_kitty_conf(tokens, kitty_out)
+    if wlogout_out:
+        generate_css(tokens, wlogout_out)
 
 
 # ---------------------------------------------------------------------------
@@ -658,12 +708,27 @@ def main():
     )
     parser.add_argument(
         '--tokens',
-        default='core/tokens/noctis_amethyst.json',
-        help='Path to the canonical token JSON source',
+        default=None,
+        help='Path to the canonical token JSON source (default: core/tokens/noctis_amethyst.json or determined by --theme)',
+    )
+    parser.add_argument(
+        '--theme',
+        default=None,
+        help='Theme slug or name to compile (e.g. noctis_amethyst, obsidian, frost, aurora, ember)',
+    )
+    parser.add_argument(
+        '--tokens-dir',
+        default='core/tokens',
+        help='Directory containing token JSON definitions (default: core/tokens)',
+    )
+    parser.add_argument(
+        '--all-themes',
+        action='store_true',
+        help='Compile Lua tables for all themes found in --tokens-dir',
     )
     parser.add_argument(
         '--lua-out',
-        default='hypr/themes/noctis_amethyst.lua',
+        default=None,
         help='Path for the generated Lua theme table',
     )
     parser.add_argument(
@@ -703,20 +768,60 @@ def main():
     )
     args = parser.parse_args()
 
+    # Determine token file path
+    tokens_file = args.tokens
+    if not tokens_file:
+        if args.theme:
+            slug = args.theme.lower().replace(" ", "_")
+            tokens_file = os.path.join(args.tokens_dir, f"{slug}.json")
+        else:
+            tokens_file = os.path.join(args.tokens_dir, 'noctis_amethyst.json')
+
+    if args.all_themes:
+        # Compile Lua tables for all themes in tokens_dir
+        if not os.path.isdir(args.tokens_dir):
+            print(f'error: tokens directory not found: {args.tokens_dir}', file=sys.stderr)
+            sys.exit(1)
+
+        token_files = [
+            f for f in sorted(os.listdir(args.tokens_dir))
+            if f.endswith('.json')
+        ]
+        if not token_files:
+            print(f'error: no JSON token files in {args.tokens_dir}', file=sys.stderr)
+            sys.exit(1)
+
+        for tf in token_files:
+            fpath = os.path.join(args.tokens_dir, tf)
+            try:
+                t_data = load_and_resolve_theme(fpath)
+            except TokenError as e:
+                print(f'error: theme {tf} failed: {e}', file=sys.stderr)
+                sys.exit(1)
+            t_slug = t_data["name"].lower().replace(" ", "_")
+            lua_target = os.path.join("hypr", "themes", f"{t_slug}.lua")
+            generate_lua(t_data, lua_target)
+            print(f'Generated: {lua_target}')
+
+        # If --all-themes was specified along with --check or default, also compile/check active theme
+        if not args.tokens and not args.theme:
+            # Also compile noctis_amethyst component tokens
+            pass
+
     # Load.
     try:
-        with open(args.tokens, 'r') as f:
+        with open(tokens_file, 'r', encoding='utf-8') as f:
             tokens = json.load(f)
     except FileNotFoundError:
-        print(f'error: token source not found: {args.tokens}', file=sys.stderr)
+        print(f'error: token source not found: {tokens_file}', file=sys.stderr)
         sys.exit(1)
     except json.JSONDecodeError as e:
-        print(f'error: malformed JSON in {args.tokens}: {e}', file=sys.stderr)
+        print(f'error: malformed JSON in {tokens_file}: {e}', file=sys.stderr)
         sys.exit(1)
 
     # Resolve Inheritance.
     try:
-        tokens = resolve_inheritance(tokens, args.tokens)
+        tokens = resolve_inheritance(tokens, tokens_file)
     except TokenError as e:
         print(f'error: theme inheritance failed: {e}', file=sys.stderr)
         sys.exit(1)
@@ -728,10 +833,13 @@ def main():
         print(f'error: token validation failed: {e}', file=sys.stderr)
         sys.exit(1)
 
+    slug = tokens["name"].lower().replace(" ", "_")
+    lua_out = args.lua_out or os.path.join('hypr', 'themes', f'{slug}.lua')
+
     if args.check:
         with tempfile.TemporaryDirectory() as tmpdir:
             targets = [
-                (args.lua_out, generate_lua),
+                (lua_out, generate_lua),
                 (args.css_out, generate_css),
                 (args.rofi_out, generate_rofi),
                 (args.swaync_out, generate_css),
@@ -760,8 +868,8 @@ def main():
             print("All token artifacts are up to date.")
             sys.exit(0)
 
-    # Generate.
-    generate_lua(tokens, args.lua_out)
+    # Generate active theme artifacts
+    generate_lua(tokens, lua_out)
     generate_css(tokens, args.css_out)
     generate_rofi(tokens, args.rofi_out)
     generate_css(tokens, args.swaync_out)
@@ -769,7 +877,7 @@ def main():
     generate_kitty_conf(tokens, args.kitty_out)
     generate_css(tokens, args.wlogout_out)
 
-    print(f'Generated: {args.lua_out}')
+    print(f'Generated: {lua_out}')
     print(f'Generated: {args.css_out}')
     print(f'Generated: {args.rofi_out}')
     print(f'Generated: {args.swaync_out}')

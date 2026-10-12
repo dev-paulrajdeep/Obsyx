@@ -137,3 +137,45 @@ Desktop hardware variants and form-factor specialization:
 # Apply workstation profile to isolated sandbox
 ./bin/obsyx profile apply workstation --dest /tmp/test-config
 ```
+
+---
+
+### 6. `obsyx theme`
+
+Official theme collection management and live desktop palette switching:
+- **`obsyx theme list`**: List all five official Obsyx themes (`Noctis Amethyst`, `Obsidian`, `Frost`, `Aurora`, `Ember`), displaying color previews and marking the currently active theme.
+- **`obsyx theme show <name>`**: Inspect detailed palette hex values, alphas, geometry, blur passes, and opacity settings for a specific theme.
+- **`obsyx theme apply <name>`**: Apply an official theme to target configuration:
+  - Generates Lua theme table (`hypr/themes/<slug>.lua`).
+  - Compiles Waybar CSS, Rofi RASI, SwayNC CSS, Hyprland conf, Kitty conf, and Wlogout CSS.
+  - Persists active state in `$XDG_CONFIG_HOME/obsyx/theme` and `.obsyx_theme`.
+  - Dispatches live compositor reload signals (`hyprctl reload`, `pkill -SIGUSR2 waybar`, `swaync-client -R`).
+  - **`--dry-run`**: Simulate theme application without modifying the filesystem.
+  - **`--dest PATH`**: Target destination override (defaults to `~/.config`).
+  - **`--json`**: Output machine-readable JSON report.
+- **`obsyx theme rofi`**: Launch the interactive Rofi theme switcher menu.
+
+#### Usage
+
+```bash
+# List available official themes
+./bin/obsyx theme list
+
+# Output theme list as JSON
+./bin/obsyx theme list --json
+
+# Show Obsidian theme tokens
+./bin/obsyx theme show obsidian
+
+# Dry-run applying Frost theme
+./bin/obsyx theme apply frost --dry-run
+
+# Apply Ember theme to user environment
+./bin/obsyx theme apply ember
+
+# Apply Aurora theme to isolated sandbox
+./bin/obsyx theme apply aurora --dest /tmp/test-config
+
+# Launch interactive Rofi theme picker
+./bin/obsyx theme rofi
+```

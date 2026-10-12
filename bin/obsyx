@@ -320,6 +320,10 @@ def run_validate(args) -> int:
     if token_files:
         expected_artifacts = [
             "hypr/themes/noctis_amethyst.lua",
+            "hypr/themes/obsidian.lua",
+            "hypr/themes/frost.lua",
+            "hypr/themes/aurora.lua",
+            "hypr/themes/ember.lua",
             "waybar/generated/theme-tokens.css",
             "rofi/generated/theme-tokens.rasi",
             "swaync/generated/theme-tokens.css",
@@ -1159,6 +1163,338 @@ def run_profile(args) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Theme Management Framework
+# ---------------------------------------------------------------------------
+
+THEME_DESCRIPTIONS = {
+    "noctis_amethyst": "Regal nocturnal purple & soft lavender glass (Reference Theme)",
+    "obsidian":        "Monolithic dark stone, matte graphite & cool platinum accents",
+    "frost":           "Crystalline polar slate & ice-blue sub-zero clarity",
+    "aurora":          "Midnight oceanic teal, emerald luminescence & Arctic sky",
+    "ember":           "Volcanic basalt rock, glowing embers & warm magma copper",
+}
+
+
+def load_themes(repo_root: str) -> dict:
+    """Load canonical theme definitions from core/tokens/ directory."""
+    tokens_dir = os.path.join(repo_root, "core", "tokens")
+    if not os.path.exists(tokens_dir):
+        return {}
+
+    sys.path.insert(0, os.path.join(repo_root, "tools"))
+    import build_tokens
+
+    themes = {}
+    for entry in sorted(os.listdir(tokens_dir)):
+        if not entry.endswith(".json"):
+            continue
+        token_path = os.path.join(tokens_dir, entry)
+        try:
+            data = build_tokens.load_and_resolve_theme(token_path)
+            slug = data.get("name", "").lower().replace(" ", "_")
+            if not slug:
+                slug = os.path.splitext(entry)[0]
+            data["slug"] = slug
+            if slug in THEME_DESCRIPTIONS:
+                data["description"] = THEME_DESCRIPTIONS[slug]
+            elif "description" not in data:
+                data["description"] = f"Official Obsyx theme {data.get('name')}"
+            themes[slug] = data
+        except Exception:
+            pass
+    return themes
+
+
+def get_active_theme(dest_root: str, repo_root: str) -> str:
+    """Detect currently active theme slug."""
+    # 1. Check <dest_root>/obsyx/theme
+    theme_file = os.path.join(dest_root, "obsyx", "theme")
+    if os.path.isfile(theme_file):
+        try:
+            with open(theme_file, "r", encoding="utf-8") as f:
+                content = f.read().strip()
+                if content:
+                    return content.lower().replace(" ", "_")
+        except Exception:
+            pass
+
+    # 2. Check <dest_root>/.obsyx_theme
+    state_file = os.path.join(dest_root, ".obsyx_theme")
+    if os.path.isfile(state_file):
+        try:
+            with open(state_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                slug = data.get("active_theme") or data.get("slug")
+                if slug:
+                    return slug.lower().replace(" ", "_")
+        except Exception:
+            pass
+
+    return "noctis_amethyst"
+
+
+def run_theme_list(args, repo_root: str, dest_root: str, themes: dict) -> int:
+    """List available themes."""
+    active = get_active_theme(dest_root, repo_root)
+    if getattr(args, "json", False):
+        output = {
+            "status": "ok",
+            "active_theme": active,
+            "destination": dest_root,
+            "themes": [
+                {
+                    "name": t.get("name"),
+                    "slug": t.get("slug"),
+                    "version": t.get("version", "0.1.0"),
+                    "description": t.get("description", ""),
+                    "is_active": (t.get("slug") == active),
+                    "accent": t.get("palette", {}).get("accent"),
+                    "accent_ink": t.get("palette", {}).get("accent_ink"),
+                    "void": t.get("palette", {}).get("void"),
+                }
+                for t in themes.values()
+            ],
+        }
+        print(json.dumps(output, indent=2))
+        return 0
+
+    print(bold(cyan("\n╭──────────────────────────────────────────────────────────╮")))
+    print(bold(cyan("│                  Obsyx Official Themes                   │")))
+    print(bold(cyan("╰──────────────────────────────────────────────────────────╯\n")))
+    print(f"Target Destination: {bold(dest_root)}")
+    print(f"Active Theme:       {bold(green(active))}\n")
+
+    for t_slug, t_data in sorted(themes.items()):
+        is_act = (t_slug == active)
+        badge = green("● ACTIVE") if is_act else dim("○")
+        palette = t_data.get("palette", {})
+        accent = palette.get("accent", "")
+        if isinstance(accent, dict):
+            accent = accent.get("hex", "")
+        void = palette.get("void", "")
+        if isinstance(void, dict):
+            void = void.get("hex", "")
+
+        color_preview = f"accent: {accent}  void: {void}"
+        print(f"  {badge:<12} {bold(t_slug):<18} {t_data.get('name', '')}")
+        print(f"                 {dim(t_data.get('description', ''))}")
+        print(f"                 {dim(color_preview)}")
+        print()
+
+    return 0
+
+
+def run_theme_show(args, repo_root: str, dest_root: str, themes: dict) -> int:
+    """Show detailed metadata and tokens for a theme."""
+    name = getattr(args, "name", None)
+    if not name:
+        avail = ", ".join(sorted(themes.keys()))
+        print(red(f"Error: Specify a theme name or slug. Available: {avail}"), file=sys.stderr)
+        return 1
+
+    slug = name.lower().replace(" ", "_")
+    if slug not in themes:
+        avail = ", ".join(sorted(themes.keys()))
+        print(red(f"Error: Unknown theme '{name}'. Available: {avail}"), file=sys.stderr)
+        return 1
+
+    data = themes[slug]
+    if getattr(args, "json", False):
+        print(json.dumps(data, indent=2))
+        return 0
+
+    palette = data.get("palette", {})
+    geometry = data.get("geometry", {})
+    blur = data.get("blur", {})
+    opacity = data.get("opacity", {})
+    shadow = data.get("shadow", {})
+
+    print(bold(cyan("\n╭──────────────────────────────────────────────────────────╮")))
+    print(bold(cyan(f"│ Theme: {data.get('name', slug)[:49]:<49}│")))
+    print(bold(cyan("╰──────────────────────────────────────────────────────────╯\n")))
+    print(f"Name:        {bold(data.get('name', ''))}")
+    print(f"Slug:        {bold(slug)}")
+    print(f"Version:     {data.get('version', '0.1.0')}")
+    print(f"Description: {data.get('description', '')}\n")
+
+    print(bold("Key Palette Tokens:"))
+    for key in ("void", "surface", "accent", "accent_ink", "warning", "danger", "border_inactive"):
+        val = palette.get(key)
+        if isinstance(val, dict):
+            val_str = f"{val.get('hex')} (alpha {val.get('alpha')})"
+        else:
+            val_str = str(val)
+        print(f"  • {key:<18} {bold(val_str)}")
+
+    print(f"\n{bold('Geometry & Materials:')}")
+    print(f"  • rounding:         {geometry.get('rounding', 8)}px (power {geometry.get('rounding_power', 2.0)})")
+    print(f"  • gaps (in/out):    {geometry.get('gaps_in', 5)}px / {geometry.get('gaps_out', 12)}px")
+    print(f"  • border size:      {geometry.get('border_size', 2)}px")
+    print(f"  • blur passes/size: {blur.get('passes', 3)} passes / {blur.get('size', 13)}px (vibrancy {blur.get('vibrancy', 0.3)})")
+    print(f"  • opacity (active): {opacity.get('active', 0.75)} (inactive: {opacity.get('inactive', 0.65)})")
+    print()
+    return 0
+
+
+def run_theme_apply(args, repo_root: str, dest_root: str, themes: dict) -> int:
+    """Apply an official theme to target configuration."""
+    name = getattr(args, "name", None)
+    if not name:
+        avail = ", ".join(sorted(themes.keys()))
+        print(red(f"Error: Specify a theme name or slug to apply. Available: {avail}"), file=sys.stderr)
+        return 1
+
+    slug = name.lower().replace(" ", "_")
+    if slug not in themes:
+        avail = ", ".join(sorted(themes.keys()))
+        print(red(f"Error: Unknown theme '{name}'. Available: {avail}"), file=sys.stderr)
+        return 1
+
+    is_dry_run = getattr(args, "dry_run", False)
+    theme_data = themes[slug]
+    t_name = theme_data.get("name", slug)
+
+    sys.path.insert(0, os.path.join(repo_root, "tools"))
+    import build_tokens
+
+    # Targets to generate
+    theme_marker_file = os.path.join(dest_root, "obsyx", "theme")
+    state_file = os.path.join(dest_root, ".obsyx_theme")
+    lua_out = os.path.join(dest_root, "hypr", "themes", f"{slug}.lua")
+    css_out = os.path.join(dest_root, "waybar", "generated", "theme-tokens.css")
+    rofi_out = os.path.join(dest_root, "rofi", "generated", "theme-tokens.rasi")
+    swaync_out = os.path.join(dest_root, "swaync", "generated", "theme-tokens.css")
+    hypr_conf_out = os.path.join(dest_root, "hypr", "generated", "theme-tokens.conf")
+    kitty_out = os.path.join(dest_root, "kitty", "generated", "theme-tokens.conf")
+    wlogout_out = os.path.join(dest_root, "wlogout", "generated", "theme-tokens.css")
+
+    actions = [
+        {"target": theme_marker_file, "description": "Active theme marker"},
+        {"target": state_file,        "description": "Theme state metadata"},
+        {"target": lua_out,           "description": "Hyprland Lua theme table"},
+        {"target": css_out,           "description": "Waybar CSS theme tokens"},
+        {"target": rofi_out,          "description": "Rofi RASI theme tokens"},
+        {"target": swaync_out,        "description": "SwayNC CSS theme tokens"},
+        {"target": hypr_conf_out,     "description": "Hyprland conf theme tokens"},
+        {"target": kitty_out,         "description": "Kitty conf theme tokens"},
+        {"target": wlogout_out,       "description": "Wlogout CSS theme tokens"},
+    ]
+
+    if not is_dry_run:
+        # Create directories and write files
+        os.makedirs(os.path.dirname(theme_marker_file), exist_ok=True)
+        with open(theme_marker_file, "w", encoding="utf-8") as f:
+            f.write(f"{slug}\n")
+
+        state_data = {
+            "active_theme": slug,
+            "name": t_name,
+            "version": theme_data.get("version", "0.1.0"),
+            "applied_at": datetime.now().isoformat(),
+            "palette": {
+                "accent": theme_data.get("palette", {}).get("accent"),
+                "void": theme_data.get("palette", {}).get("void"),
+            },
+        }
+        with open(state_file, "w", encoding="utf-8") as f:
+            json.dump(state_data, f, indent=2)
+
+        build_tokens.compile_theme_artifacts(
+            theme_data,
+            lua_out=lua_out,
+            css_out=css_out,
+            rofi_out=rofi_out,
+            swaync_out=swaync_out,
+            hypr_conf_out=hypr_conf_out,
+            kitty_out=kitty_out,
+            wlogout_out=wlogout_out,
+        )
+
+        # Dispatch compositor reload signals if running
+        if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+            try:
+                subprocess.run(["hyprctl", "reload"], capture_output=True, timeout=2)
+            except Exception:
+                pass
+        if shutil.which("pkill"):
+            try:
+                subprocess.run(["pkill", "-SIGUSR2", "waybar"], capture_output=True, timeout=2)
+            except Exception:
+                pass
+        if shutil.which("swaync-client"):
+            try:
+                subprocess.run(["swaync-client", "-R"], capture_output=True, timeout=2)
+            except Exception:
+                pass
+
+    if getattr(args, "json", False):
+        output = {
+            "status": "ok",
+            "theme": slug,
+            "name": t_name,
+            "dry_run": is_dry_run,
+            "destination": dest_root,
+            "actions": actions,
+        }
+        print(json.dumps(output, indent=2))
+        return 0
+
+    title_suffix = " (DRY RUN SIMULATION)" if is_dry_run else ""
+    print(bold(cyan("\n╭──────────────────────────────────────────────────────────╮")))
+    print(bold(cyan(f"│            Obsyx Theme Switcher{title_suffix[:23]:<23}│")))
+    print(bold(cyan("╰──────────────────────────────────────────────────────────╯\n")))
+    if is_dry_run:
+        print(yellow(bold("⚡ DRY RUN: No modifications were made to the filesystem.\n")))
+
+    print(f"Target Destination: {bold(dest_root)}")
+    print(f"Applying Theme:     {bold(green(t_name))} ({slug})\n")
+
+    for act in actions:
+        status_badge = yellow("○ SIMULATE") if is_dry_run else green("✔ COMPILED")
+        print(f"  {status_badge} {bold(act['description']):<28} {act['target']}")
+
+    print()
+    if is_dry_run:
+        print(bold(yellow("Simulation complete. Run without --dry-run to apply changes.")))
+    else:
+        print(bold(green(f"✔ Successfully applied '{t_name}'! Live compositor components reloaded.")))
+    print()
+    return 0
+
+
+def run_theme_rofi(args, repo_root: str) -> int:
+    """Launch the interactive Rofi theme switcher."""
+    switcher_script = os.path.join(repo_root, "rofi", "scripts", "theme-switcher.sh")
+    if not os.path.isfile(switcher_script):
+        print(red(f"Error: Switcher script not found at {switcher_script}"), file=sys.stderr)
+        return 1
+
+    if not shutil.which("rofi"):
+        print(red("Error: 'rofi' executable not found in PATH."), file=sys.stderr)
+        return 1
+
+    proc = subprocess.run(["bash", switcher_script])
+    return proc.returncode
+
+
+def run_theme(args) -> int:
+    """Run theme subcommand."""
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    dest_root = os.path.abspath(getattr(args, "dest", None) or os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"))
+    themes = load_themes(repo_root)
+
+    action = getattr(args, "theme_action", None)
+    if action == "show":
+        return run_theme_show(args, repo_root, dest_root, themes)
+    elif action == "apply":
+        return run_theme_apply(args, repo_root, dest_root, themes)
+    elif action == "rofi":
+        return run_theme_rofi(args, repo_root)
+    else:
+        return run_theme_list(args, repo_root, dest_root, themes)
+
+
+# ---------------------------------------------------------------------------
 # Main CLI Entrypoint
 # ---------------------------------------------------------------------------
 
@@ -1226,6 +1562,34 @@ def main():
     p_apply.add_argument("--dry-run", action="store_true", help="Simulate applying profile without touching filesystem.")
     p_apply.add_argument("--json", action="store_true", help="Output apply report as JSON.")
 
+    # Theme
+    theme_parser = subparsers.add_parser("theme", help="Manage and switch desktop themes (Noctis Amethyst, Obsidian, Frost, Aurora, Ember).")
+    theme_parser.add_argument("--dest", "--target", dest="dest", help="Target configuration destination (default: ~/.config).")
+    theme_parser.add_argument("--json", action="store_true", help="Output theme list as JSON.")
+
+    theme_subparsers = theme_parser.add_subparsers(dest="theme_action", help="Theme actions (list, show, apply, rofi).")
+
+    # theme list
+    t_list = theme_subparsers.add_parser("list", help="List available official themes.")
+    t_list.add_argument("--dest", "--target", dest="dest", help="Target configuration destination (default: ~/.config).")
+    t_list.add_argument("--json", action="store_true", help="Output theme list as JSON.")
+
+    # theme show
+    t_show = theme_subparsers.add_parser("show", help="Show theme tokens and material properties.")
+    t_show.add_argument("name", help="Theme name or slug (e.g. obsidian, frost, aurora, ember, noctis_amethyst).")
+    t_show.add_argument("--dest", "--target", dest="dest", help="Target configuration destination (default: ~/.config).")
+    t_show.add_argument("--json", action="store_true", help="Output theme details as JSON.")
+
+    # theme apply
+    t_apply = theme_subparsers.add_parser("apply", help="Apply an official theme to target desktop configuration.")
+    t_apply.add_argument("name", help="Theme name or slug to apply.")
+    t_apply.add_argument("--dest", "--target", dest="dest", help="Target configuration destination (default: ~/.config).")
+    t_apply.add_argument("--dry-run", action="store_true", help="Simulate applying theme without touching filesystem.")
+    t_apply.add_argument("--json", action="store_true", help="Output apply report as JSON.")
+
+    # theme rofi
+    t_rofi = theme_subparsers.add_parser("rofi", help="Launch the interactive Rofi theme switcher.")
+
     args = parser.parse_args()
 
     if args.command == "doctor":
@@ -1238,6 +1602,8 @@ def main():
         sys.exit(run_docgen(args))
     elif args.command == "profile":
         sys.exit(run_profile(args))
+    elif args.command == "theme":
+        sys.exit(run_theme(args))
     else:
         parser.print_help()
         sys.exit(1)

@@ -169,7 +169,7 @@ Obsyx OS additionally needs the system layers that dotfiles do not provide:
 - [x] Theme registry
 - [x] Theme loader
 - [x] Theme metadata
-- [ ] Theme inheritance
+- [x] Theme inheritance
 - [x] Theme validation
 
 ## Design Tokens
@@ -204,13 +204,13 @@ Obsyx OS additionally needs the system layers that dotfiles do not provide:
 
 ## Official Themes
 
-Obsyx ships with **Noctis Amethyst** as its default reference theme. Future official themes will build upon the same architecture and design system.
+Obsyx ships with **Noctis Amethyst** as its default reference theme alongside five complete official themes built upon the canonical design system.
 
 - [x] Noctis Amethyst *(Reference Theme)*
-- [ ] Obsidian
-- [ ] Frost
-- [ ] Aurora
-- [ ] Ember
+- [x] Obsidian
+- [x] Frost
+- [x] Aurora
+- [x] Ember
 
 ---
 
@@ -239,7 +239,7 @@ Obsyx ships with **Noctis Amethyst** as its default reference theme. Future offi
 - [x] `obsyx install`
 - [ ] `obsyx update`
 - [x] `obsyx doctor`
-- [ ] `obsyx theme`
+- [x] `obsyx theme` *(Official themes switcher and palette manager)*
 - [ ] `obsyx backup` *(built-in automated backups in `obsyx install`)*
 - [ ] `obsyx restore`
 - [x] `obsyx docgen` *(Keybindings cheatsheet & Rofi launcher generator)*

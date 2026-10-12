@@ -1,0 +1,60 @@
+{
+    "name": "Ember",
+    "version": "0.1.0",
+    "palette": {
+        "void":             "#120c0c",
+        "surface":          { "hex": "#171010", "alpha": 0.89 },
+        "surface_raised":   { "hex": "#1f1515", "alpha": 0.94 },
+        "surface_focus":    { "hex": "#271b1b", "alpha": 0.97 },
+        "overlay":          { "hex": "#221717", "alpha": 0.98 },
+
+        "ink_strong":       { "hex": "#fff7ed", "alpha": 0.94 },
+        "ink_default":      { "hex": "#ffedd5", "alpha": 0.80 },
+        "ink_muted":        { "hex": "#d6b8a8", "alpha": 0.62 },
+        "ink_quiet":        { "hex": "#9c7b6d", "alpha": 0.42 },
+
+        "hairline":         { "hex": "#ff7043", "alpha": 0.12 },
+        "hairline_strong":  { "hex": "#ff7043", "alpha": 0.22 },
+
+        "shadow":           { "hex": "#0a0404", "alpha": 0.40 },
+
+        "accent":           "#ff7043",
+        "accent_ink":       "#ffccbc",
+        "accent_wash":      { "hex": "#ff7043", "alpha": 0.16 },
+        "accent_fill":      { "hex": "#ff7043", "alpha": 0.32 },
+        "accent_line":      { "hex": "#ff8a65", "alpha": 0.50 },
+
+        "accent_gradient_start": { "hex": "#f4511e", "alpha": 0.93 },
+        "accent_gradient_end":   { "hex": "#ffab91", "alpha": 0.93 },
+
+        "warning":          "#ffb74d",
+        "danger":           "#e53935",
+        "danger_wash":      { "hex": "#e53935", "alpha": 0.16 },
+
+        "border_inactive":  { "hex": "#2b1d1d", "alpha": 0.82 }
+    },
+    "geometry": {
+        "gaps_in": 5,
+        "gaps_out": 12,
+        "border_size": 2,
+        "rounding": 8,
+        "rounding_power": 2.4
+    },
+    "opacity": {
+        "active": 0.76,
+        "inactive": 0.65,
+        "fullscreen": 0.95
+    },
+    "blur": {
+        "size": 12,
+        "passes": 3,
+        "vibrancy": 0.28,
+        "contrast": 1.16,
+        "brightness": 1.0
+    },
+    "shadow": {
+        "range": 18,
+        "render_power": 4,
+        "color": { "hex": "#0a0404", "alpha": 0.55 }
+    }
+}
