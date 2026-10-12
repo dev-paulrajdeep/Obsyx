@@ -10,11 +10,12 @@ During session initialization, Hyprland executes `hypr/config/autostart.lua` via
 flowchart TD
     Start["hyprland.start Hook"] --> Auth["1. Polkit Authentication Agent<br/>(hypr/scripts/auth-agent.sh)"]
     Auth --> Notif["2. Notification Daemon<br/>(swaync)"]
-    Notif --> WallDaemon["3. Wallpaper Daemon<br/>(swww-daemon / hyprpaper)"]
-    WallDaemon --> Clip["4. Clipboard Watchers<br/>(wl-paste -> cliphist text & image)"]
-    Clip --> Applets["5. System Applets<br/>(nm-applet, blueman-applet)"]
-    Applets --> Bar["6. Status Bar<br/>(waybar)"]
-    Bar --> Timer["7. Delayed Wallpaper Dispatch<br/>(500ms oneshot timer)"]
+    Notif --> WallDaemon["3. Wallpaper Daemon<br/>(swww-daemon by default)"]
+    WallDaemon --> Idle["4. Idle Daemon<br/>(hypridle)"]
+    Idle --> Clip["5. Clipboard Watchers<br/>(wl-paste -> cliphist text & image)"]
+    Clip --> Applets["6. System Applets<br/>(nm-applet, blueman-applet)"]
+    Applets --> Bar["7. Status Bar<br/>(waybar)"]
+    Bar --> Timer["8. Delayed Wallpaper Dispatch<br/>(500ms oneshot timer)"]
     Timer --> ApplyWall["hypr/scripts/wallpaper.sh<br/>(swww img / hyprpaper preload)"]
 ```
 
@@ -26,7 +27,8 @@ All autostarted binaries and scripts are centrally configured in `Registry.Start
 |-----------|--------------|-----------------|-------------|
 | **Auth Agent** | `Registry.Startup.authAgent` | `~/.config/hypr/scripts/auth-agent.sh` | Discovers & runs Wayland Polkit agent (`hyprpolkitagent`, `polkit-gnome`, etc.) |
 | **Notification Daemon** | `Registry.Startup.notificationDaemon` | `swaync` | SwayNC notification center daemon |
-| **Wallpaper Daemon** | `Registry.Startup.wallpaperDaemon` | `swww-daemon` | Active wallpaper daemon (supports `swww-daemon` or `hyprpaper`) |
+| **Wallpaper Daemon** | `Registry.Startup.wallpaperDaemon` | `swww-daemon` | Startup default; the setter script can also issue wallpaper requests through Hyprpaper IPC |
+| **Idle Daemon** | `Registry.Startup.idleDaemon` | `hypridle` | Idle and lock behavior |
 | **Wallpaper Setter** | `Registry.Startup.wallpaper` | `~/.config/hypr/scripts/wallpaper.sh` | Applies wallpaper with fade transitions or IPC |
 | **Clipboard (Text)** | `Registry.Startup.clipboardText` | `wl-paste --type text --watch cliphist store` | Text history watcher |
 | **Clipboard (Image)** | `Registry.Startup.clipboardImage` | `wl-paste --type image --watch cliphist store` | Image history watcher |
@@ -53,8 +55,9 @@ Obsyx ships with canonical wallpaper assets aligned with the Noctis Amethyst des
      swww img "$WALLPAPER" --transition-type fade --transition-duration 1.5 --transition-fps 60
      ```
 
-2. **`hyprpaper` (Alternative)**:
+2. **`hyprpaper` (manual alternative)**:
    - Official Hyprland wallpaper utility.
+   - The current autostart registry starts `swww-daemon`; configure that registry yourself if you want `hyprpaper` to start instead. The wallpaper setter has an IPC fallback, but does not start `hyprpaper`.
    - Configured via `hypr/hyprpaper.conf`:
      ```ini
      preload = ~/.config/hypr/assets/wallpapers/noctis_amethyst_default.png

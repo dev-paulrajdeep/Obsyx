@@ -1,6 +1,6 @@
 # Obsyx Desktop Hardware Profiles Architecture
 
-Obsyx provides a modular hardware/form-factor profile architecture that specializes compositor graphics parameters, Waybar layouts, and telemetry instruments according to the host system's hardware profile and power constraints.
+Obsyx provides two manually selected form-factor profiles. They install configuration overrides; they do not detect hardware or measure power use. Values below describe the shipped configuration, not a performance guarantee.
 
 ---
 
@@ -10,12 +10,12 @@ Obsyx provides a modular hardware/form-factor profile architecture that speciali
 Designed for laptops, portable devices, and battery-sensitive workflows.
 
 - **Compositor Rendering:**
-  - **Blur:** Single pass (`passes = 1`, `size = 4`, `vibrancy = 0.15`), substantially reducing GPU compositing overhead on integrated graphics.
+  - **Blur:** Single pass (`passes = 1`, `size = 4`, `vibrancy = 0.15`).
   - **Shadows:** Completely disabled to eliminate shadow draw calls.
   - **Refresh Rate:** Variable Frame Rate enabled (`vfr = true`), Variable Refresh Rate disabled (`vrr = 0`).
 - **Waybar Configuration:**
   - **Compact Geometry:** Bar height reduced to `32px` with tight margins (`6px` top, `8px` horizontal) to maximize vertical workspace on 13"–16" screens.
-  - **Power-Aware Telemetry:** Includes battery and volume monitors while omitting always-polling dedicated GPU query scripts to prevent waking up discrete GPUs while on battery.
+  - **Telemetry:** The shipped laptop layout omits the dedicated GPU module.
 
 ### 2. `workstation` (High-Fidelity Desktop)
 Designed for desktop workstations, high-refresh multi-monitor setups, and dedicated GPU machines.
@@ -23,7 +23,7 @@ Designed for desktop workstations, high-refresh multi-monitor setups, and dedica
 - **Compositor Rendering:**
   - **Blur:** High-fidelity multi-pass blur (`passes = 3`, `size = 8`, `vibrancy = 0.35`) delivering deep frosted glass aesthetics.
   - **Shadows:** Ambient drop shadows enabled (`range = 24`, `render_power = 3`).
-  - **Refresh Rate:** Variable Refresh Rate enabled (`vrr = 1`) for fluid gameplay and high-Hz monitor sync.
+  - **Refresh Rate:** Variable Refresh Rate enabled (`vrr = 1`).
 - **Waybar Configuration:**
   - **Spacious Geometry:** Full `40px` height with generous margins (`12px`).
   - **Expanded Instrument Cluster:** Full system monitoring including dedicated GPU utilization (`custom/gpu`), CPU core meters, memory, network, and VPN monitors.
@@ -64,8 +64,6 @@ Displays detailed parameter tuning including blur passes, shadow settings, VRR s
 ./bin/obsyx profile apply laptop --dest /tmp/test-config
 ```
 
-When applied:
-1. Deploys Hyprland configuration override to `<dest>/hypr/config/profile.lua` and `<dest>/obsyx/profile.lua`.
-2. Deploys specialized Waybar layout and stylesheet overrides to `<dest>/waybar/config.jsonc` and `<dest>/waybar/profile-style.css`.
-3. Records active profile metadata into `<dest>/.obsyx_profile`.
-4. Automatically triggers live reload (`hyprctl reload` and `pkill -SIGUSR2 waybar`) if running within an active Wayland session.
+Applying a profile writes Hyprland overrides to `<dest>/hypr/config/profile.lua` and `<dest>/obsyx/profile.lua`, Waybar overrides to `<dest>/waybar/config.jsonc` and `<dest>/waybar/profile-style.css`, and active profile metadata to `<dest>/.obsyx_profile`. It attempts reload signals when run in a Hyprland session; failures are ignored.
+
+Profile application writes those targets directly. In particular, an existing Waybar config file may be copied to a `.bak` file before being replaced, while the Hyprland profile targets may be overwritten. Review and back up local changes before applying to a real config directory. Use `--dry-run` to inspect the planned destinations; use `--dest /tmp/...` to inspect an isolated application.

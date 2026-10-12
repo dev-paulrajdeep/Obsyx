@@ -2,120 +2,109 @@
 
 # Obsyx
 
-### A modular Wayland desktop framework built with Hyprland and Lua.
+### A modular Hyprland desktop configuration framework
 
-Elegant by design. Engineered for maintainability.
+Lua configuration, themed desktop components, profiles, and command-line tools for Arch-based Linux systems.
 
----
-
-![Platform](https://img.shields.io/badge/Platform-Linux-1793D1?style=for-the-badge)
-![Wayland](https://img.shields.io/badge/Wayland-Hyprland-6E4AFF?style=for-the-badge)
-![Language](https://img.shields.io/badge/Language-Lua-2C2D72?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Active-7ED957?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
+[![Platform](https://img.shields.io/badge/Platform-Linux-1793D1?style=for-the-badge)](#requirements)
+[![Wayland](https://img.shields.io/badge/Compositor-Hyprland-6E4AFF?style=for-the-badge)](#requirements)
+[![Language](https://img.shields.io/badge/Configuration-Lua-2C2D72?style=for-the-badge)](#project-map)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE.md)
 
 </div>
 
 ---
 
-## Overview
+Obsyx organizes a Hyprland desktop into maintainable configuration modules. It includes Waybar, Rofi, SwayNC, Hyprlock, Kitty, and Wlogout configuration; five official themes; laptop and workstation profiles; and tools for installing the configuration, switching themes, generating keybinding documentation, and checking configuration syntax.
 
-Obsyx is a modular desktop framework for Hyprland that treats desktop configuration as software engineering rather than a collection of configuration files.
+**Obsyx is desktop configuration software, not an operating system distribution.** This repository does not currently provide a bootable ISO, disk installer, base-system package manifest, or OS update and recovery service. The OS work described in [ROADMAP.md](ROADMAP.md) remains planned work.
 
-The framework currently ships with **Noctis Amethyst**, its default reference theme, which showcases the design language, architecture, and interaction model that future themes will build upon.
+## Requirements
 
-Instead of one large monolithic configuration, every subsystem is isolated into reusable modules with clearly defined responsibilities.
+The package recipe targets an existing Arch Linux system. The desktop configuration is built around Hyprland and Lua. Components and features require their corresponding applications, including Waybar, Rofi, SwayNC, Hyprlock, Kitty, Wlogout, a wallpaper daemon, and Wayland utilities. `obsyx doctor` reports required, recommended, and optional command-line tools; it does not install packages or prove that the session is configured correctly.
 
-The project focuses on:
+The package recipe is in [`packaging/arch/PKGBUILD`](packaging/arch/PKGBUILD). Review its dependency list and your system before installing. Obsyx does not configure a complete OS or guarantee support for every device.
 
-- Clean architecture
-- Modular configuration
-- Consistent visual language
-- Smooth interaction design
-- Hardware-aware optimization
-- Long-term maintainability
+## Quick start
 
----
+Clone the repository, inspect the proposed changes, then install the six supported configuration trees. The installer links repository directories into your XDG config directory (normally `~/.config`). If a target already exists, it is moved to a timestamped `.backup.<timestamp>` path before the link is created. Keep the repository in place while using these links.
 
-# Current Features
+```bash
+git clone https://github.com/dev-paulrajdeep/Obsyx.git
+cd Obsyx
 
-## Architecture
+# Preview the default install; this makes no filesystem changes.
+./bin/obsyx install --dry-run
 
-- Modular Lua configuration
-- Central command registry
-- Layered configuration loading
-- Reusable modules
-- Production-oriented file hierarchy
+# Install interactively, or choose a non-interactive component set.
+./bin/obsyx install --interactive
+# ./bin/obsyx install --components hypr,waybar,rofi
 
-## Desktop
+# Check dependencies and configuration syntax.
+./bin/obsyx doctor
+./bin/obsyx validate
+```
 
-- Activity-oriented workspaces
-- Advanced window management
-- Comprehensive keybinding system
-- Dynamic layouts
-- Floating window rules
-- Scratchpad workspace
+The installer manages configuration links; it does not install dependencies. Read [Installation](docs/installer.md) before applying it to an existing `~/.config`.
 
-## Visuals
+## Common commands
 
-- Glass-inspired desktop
-- Blur and transparency
-- Custom animation curves
-- Workspace transitions
-- Dynamic borders
-- Rounded window geometry
+```bash
+./bin/obsyx theme list
+./bin/obsyx theme apply frost --dry-run
+./bin/obsyx profile list
+./bin/obsyx profile apply laptop --dry-run
+./bin/obsyx docgen --check
+```
 
-## System Integration
+Use `./bin/obsyx --help` or see the [CLI reference](docs/cli.md) for all commands. Theme and profile apply commands default to `$XDG_CONFIG_HOME` or `~/.config`; use `--dest` to preview or target another directory.
 
-- Wallpaper daemon
-- Clipboard history
-- Notifications
-- Audio controls
-- Brightness controls
-- Screenshot workflow
-- Bluetooth integration
-- Network integration
+## Included features
 
----
+- Modular Hyprland Lua configuration for input, monitors, rules, layouts, appearance, startup, and keybindings.
+- Five themes: Noctis Amethyst, Obsidian, Frost, Aurora, and Ember. Canonical JSON tokens generate component-specific styles and configuration.
+- Laptop and workstation profile overrides.
+- Waybar modules and telemetry scripts, Rofi launcher and utility menus, SwayNC styles, Hyprlock, Kitty, and Wlogout configuration.
+- Plugin registration and lifecycle callbacks for initialization, theme changes, profile changes, and workspace changes. Plugins execute Lua code in the desktop process; the framework does not provide a plugin permission sandbox.
+- `doctor`, `validate`, `install`, `theme`, `profile`, and `docgen` commands.
 
-# Goals
+See [Themes](docs/themes.md), [Theme tokens](docs/theme-tokens.md), [Profiles](docs/profiles.md), [Autostart and wallpapers](docs/autostart-and-wallpapers.md), and [User overrides](user/README.md).
 
-Obsyx is evolving toward a complete desktop framework featuring:
+## Project map
 
-- Theme engine
-- Design token system
-- Component library
-- Automated installer
-- Configuration validation
-- Documentation generator
-- Multiple desktop variants
-- Plugin support
+| Path | Purpose |
+|---|---|
+| `hypr/` | Hyprland entry point, Lua modules, themes, and helper scripts |
+| `core/tokens/` | Canonical JSON theme token sources |
+| `waybar/`, `rofi/`, `swaync/`, `kitty/`, `wlogout/` | Desktop component configuration |
+| `profiles/` | Laptop/workstation overrides and theme-specific assets |
+| `bin/obsyx` | Python standard-library CLI |
+| `tools/` | Token compiler, installer wrapper, packaging and validation helpers |
+| `tests/` | Python unit and static integration checks |
+| `docs/` | CLI, installer, theme, profile, and workflow documentation |
+| `packaging/arch/` | Arch package recipe and AUR publishing helper |
 
----
+## Development and checks
 
-# Status
+Python unit tests can be run with:
 
-Current development stage:
+```bash
+python3 -m unittest discover tests/ -v
+```
 
-**Foundation Complete**
+The test suite includes Python-driven checks and a headless Wayland integration script. The headless script needs a working Hyprland build and is not equivalent to testing a full installed desktop. Syntax validation and passing unit tests do not establish boot, hardware, or installer behavior. See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance.
 
-The core architecture is implemented and actively evolving toward a fully documented desktop framework.
+## Documentation
 
-See:
+- [CLI reference](docs/cli.md)
+- [Installer behavior and options](docs/installer.md)
+- [Themes](docs/themes.md)
+- [Theme token compiler](docs/theme-tokens.md)
+- [Hardware profiles](docs/profiles.md)
+- [Autostart and wallpapers](docs/autostart-and-wallpapers.md)
+- [Keybindings](KEYBINDINGS.md)
+- [Roadmap and product scope](ROADMAP.md)
 
-- ROADMAP.md
-- CHANGELOG.md
+## License
 
----
-
-# License
-
-Released under the MIT License.
-
----
-
-<div align="center">
-
-Built with Hyprland, Lua, and an appreciation for well-structured software.
-
-</div>
+Obsyx is distributed under the [MIT License](LICENSE.md).

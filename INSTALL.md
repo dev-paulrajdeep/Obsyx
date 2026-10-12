@@ -1,4 +1,6 @@
-# Install the ObsyxOS Antigravity Agent Workflow
+# Set up the Obsyx repository agent workflow
+
+This file documents repository-specific Antigravity agent workflow setup. It is not an installation guide for Obsyx Desktop or an operating system; see [README.md](README.md) and [docs/installer.md](docs/installer.md) for desktop configuration deployment.
 
 1. From the Obsyx repository, create a clean branch, for example:
    ```bash

@@ -400,6 +400,189 @@ SUPPORTED_COMPONENTS = {
 }
 
 
+def prompt_choice(prompt_text: str, options: list, default_idx: int = 0) -> str:
+    """Prompt user to choose from a list of (key, description) options."""
+    print(bold(f"\n{prompt_text}"))
+    for idx, (key, desc) in enumerate(options, 1):
+        def_marker = " (default)" if (idx - 1) == default_idx else ""
+        print(f"  {bold(cyan(str(idx)))} • {bold(key)}: {dim(desc)}{def_marker}")
+
+    while True:
+        try:
+            val = input(bold(f"\nEnter choice [1-{len(options)}] (default: {default_idx + 1}): ")).strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nCancelled.")
+            sys.exit(0)
+        if not val:
+            return options[default_idx][0]
+        try:
+            n = int(val)
+            if 1 <= n <= len(options):
+                return options[n - 1][0]
+        except ValueError:
+            pass
+        print(red(f"Invalid selection. Please enter a number between 1 and {len(options)}."))
+
+
+def prompt_text_input(prompt_text: str, default_val: str) -> str:
+    """Prompt user for text input with default value."""
+    try:
+        val = input(bold(f"{prompt_text} [{default_val}]: ")).strip()
+    except (EOFError, KeyboardInterrupt):
+        print("\nCancelled.")
+        sys.exit(0)
+    return val if val else default_val
+
+
+def prompt_yes_no(prompt_text: str, default_yes: bool = True) -> bool:
+    """Prompt user for a yes/no confirmation."""
+    opts = "Y/n" if default_yes else "y/N"
+    while True:
+        try:
+            val = input(bold(f"{prompt_text} [{opts}]: ")).strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print("\nCancelled.")
+            sys.exit(0)
+        if not val:
+            return default_yes
+        if val in ("y", "yes"):
+            return True
+        if val in ("n", "no"):
+            return False
+        print(red("Please enter 'y' or 'n'."))
+
+
+def run_interactive_installer(repo_root: str, default_dest: str) -> dict:
+    """Guide the user through an interactive Obsyx desktop installation session."""
+    print(bold(cyan("\n╭──────────────────────────────────────────────────────────╮")))
+    print(bold(cyan("│            Obsyx Desktop Interactive Installer           │")))
+    print(bold(cyan("╰──────────────────────────────────────────────────────────╯\n")))
+    print("Welcome to Obsyx! This wizard guides you through deploying and")
+    print("personalizing your modular Wayland desktop environment.\n")
+
+    # Step 1: Pre-flight Package Check
+    print(bold(cyan("► Step 1: System Pre-flight & Dependency Check")))
+    tools_to_check = [
+        ("hyprland", "Hyprland Wayland compositor", True),
+        ("waybar", "Waybar modular status bar", True),
+        ("rofi", "Rofi application launcher", False),
+        ("swaync", "SwayNC notification daemon", False),
+        ("kitty", "Kitty GPU-accelerated terminal", False),
+        ("wlogout", "Wlogout session logout interface", False),
+    ]
+    detected_count = 0
+    for binary, desc, is_req in tools_to_check:
+        found = shutil.which(binary) is not None
+        if found:
+            detected_count += 1
+            print(f"  {green('✔ FOUND   ')} {bold(binary):<12} {dim(desc)}")
+        else:
+            tag = red("✘ MISSING (REQUIRED)") if is_req else yellow("○ OPTIONAL (NOT FOUND)")
+            print(f"  {tag:<22} {bold(binary):<12} {dim(desc)}")
+    print(f"\n  Detected {detected_count}/{len(tools_to_check)} desktop environment packages.\n")
+
+    # Step 2: Destination path
+    print(bold(cyan("► Step 2: Target Configuration Destination")))
+    print(dim("Specify where Obsyx dotfiles should be deployed."))
+    dest_path = prompt_text_input("Install destination directory", default_dest)
+    dest_path = os.path.abspath(os.path.expanduser(dest_path))
+
+    # Detect existing configurations that will be backed up
+    existing = []
+    for comp in SUPPORTED_COMPONENTS:
+        t_path = os.path.join(dest_path, comp)
+        if os.path.exists(t_path) and not (os.path.islink(t_path) and os.path.realpath(t_path) == os.path.realpath(os.path.join(repo_root, comp))):
+            existing.append(comp)
+    if existing:
+        print(yellow(f"\n  Note: Existing configurations found for: {', '.join(existing)}."))
+        print(yellow(f"  Existing configs will be safely backed up with timestamped filenames."))
+
+    # Step 3: Installation Profile / Preset
+    print(bold(cyan("\n► Step 3: Component Installation Preset")))
+    preset = prompt_choice(
+        "Choose an installation preset:",
+        [
+            ("Full", "Install all components: Hyprland, Waybar, Rofi, SwayNC, Kitty, Wlogout"),
+            ("Minimal", "Install core compositor and status bar only: Hyprland, Waybar"),
+            ("Custom", "Interactively select each individual desktop component"),
+        ],
+        default_idx=0
+    )
+
+    if preset == "Full":
+        selected_components = list(SUPPORTED_COMPONENTS.keys())
+    elif preset == "Minimal":
+        selected_components = ["hypr", "waybar"]
+    else:
+        print(bold("\nSelect components to include (enter 'y' to include, 'n' to exclude):"))
+        selected_components = []
+        for comp, (_, desc) in SUPPORTED_COMPONENTS.items():
+            if prompt_yes_no(f"Include {bold(comp)} ({desc})?", default_yes=True):
+                selected_components.append(comp)
+        if not selected_components:
+            print(yellow("No components selected; defaulting to core 'hypr'."))
+            selected_components = ["hypr"]
+
+    # Step 4: Initial Theme Selection
+    print(bold(cyan("\n► Step 4: Initial Official Theme Selection")))
+    theme_choice = prompt_choice(
+        "Select your default active desktop theme:",
+        [
+            ("noctis_amethyst", "Noctis Amethyst — Regal nocturnal purple & soft lavender glass (Reference Theme)"),
+            ("obsidian", "Obsidian — Monolithic dark stone, matte graphite & cool platinum accents"),
+            ("frost", "Frost — Crystalline polar slate & ice-blue sub-zero clarity"),
+            ("aurora", "Aurora — Midnight oceanic teal, emerald luminescence & Arctic sky"),
+            ("ember", "Ember — Volcanic basalt rock, glowing embers & warm magma copper"),
+        ],
+        default_idx=0
+    )
+
+    # Step 5: Hardware Form-Factor Profile
+    print(bold(cyan("\n► Step 5: Hardware Profile Tuning")))
+    profile_choice = prompt_choice(
+        "Select hardware form-factor profile:",
+        [
+            ("default", "Standard desktop configuration (balanced blur and full layout)"),
+            ("workstation", "Workstation — Expanded multi-monitor cluster and rich telemetry"),
+            ("laptop", "Laptop — Battery-saving mode, reduced blur passes, and compact bar"),
+        ],
+        default_idx=0
+    )
+
+    # Step 6: Confirmation Review & Action Choice
+    print(bold(cyan("\n► Step 6: Confirmation & Review")))
+    print(f"  • Target Destination: {bold(dest_path)}")
+    print(f"  • Preset:             {bold(preset)}")
+    print(f"  • Components:         {bold(', '.join(selected_components))}")
+    print(f"  • Active Theme:       {bold(theme_choice)}")
+    print(f"  • Hardware Profile:   {bold(profile_choice)}")
+    if existing:
+        print(f"  • Automated Backups:  {yellow(', '.join(existing))}")
+
+    confirm_action = prompt_choice(
+        "Ready to proceed?",
+        [
+            ("install", "Proceed with live installation and configuration"),
+            ("dry_run", "Simulate installation without touching the filesystem (Dry Run)"),
+            ("cancel", "Cancel installation and exit"),
+        ],
+        default_idx=0
+    )
+
+    if confirm_action == "cancel":
+        print("\nInstallation aborted by user.")
+        sys.exit(0)
+
+    is_dry_run = (confirm_action == "dry_run")
+    return {
+        "dest": dest_path,
+        "components": selected_components,
+        "theme": theme_choice,
+        "profile": profile_choice if profile_choice != "default" else None,
+        "dry_run": is_dry_run,
+    }
+
+
 def run_install(args) -> int:
     """Safely install Obsyx desktop components with dry-run and automated backups."""
     from datetime import datetime
@@ -413,15 +596,27 @@ def run_install(args) -> int:
     is_dry_run = getattr(args, "dry_run", False)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # Select components
-    selected_keys = list(SUPPORTED_COMPONENTS.keys())
-    if getattr(args, "components", None):
-        user_comps = [c.strip().lower() for c in args.components.split(",") if c.strip()]
-        selected_keys = [k for k in selected_keys if k in user_comps]
+    applied_theme = None
+    applied_profile = None
 
-    if getattr(args, "skip", None):
-        skip_comps = [c.strip().lower() for c in args.skip.split(",") if c.strip()]
-        selected_keys = [k for k in selected_keys if k not in skip_comps]
+    # Interactive Wizard Mode
+    if getattr(args, "interactive", False):
+        cfg = run_interactive_installer(repo_root, dest_root)
+        dest_root = cfg["dest"]
+        selected_keys = cfg["components"]
+        is_dry_run = cfg["dry_run"]
+        applied_theme = cfg.get("theme")
+        applied_profile = cfg.get("profile")
+    else:
+        # Select components from arguments
+        selected_keys = list(SUPPORTED_COMPONENTS.keys())
+        if getattr(args, "components", None):
+            user_comps = [c.strip().lower() for c in args.components.split(",") if c.strip()]
+            selected_keys = [k for k in selected_keys if k in user_comps]
+
+        if getattr(args, "skip", None):
+            skip_comps = [c.strip().lower() for c in args.skip.split(",") if c.strip()]
+            selected_keys = [k for k in selected_keys if k not in skip_comps]
 
     actions = []
 
@@ -538,8 +733,58 @@ def run_install(args) -> int:
         print(bold(yellow("Simulation complete. Run without --dry-run to apply changes.")))
     else:
         print(bold(green("✔ Installation complete! All selected components are safely linked.")))
-    print()
 
+        if applied_theme:
+            themes = load_themes(repo_root)
+            if applied_theme in themes:
+                sys.path.insert(0, os.path.join(repo_root, "tools"))
+                import build_tokens
+                theme_data = themes[applied_theme]
+                theme_marker = os.path.join(dest_root, "obsyx", "theme")
+                os.makedirs(os.path.dirname(theme_marker), exist_ok=True)
+                with open(theme_marker, "w", encoding="utf-8") as f:
+                    f.write(f"{applied_theme}\n")
+
+                state_file = os.path.join(dest_root, ".obsyx_theme")
+                with open(state_file, "w", encoding="utf-8") as f:
+                    json.dump({"active_theme": applied_theme, "name": theme_data.get("name")}, f, indent=2)
+
+                lua_out = os.path.join(dest_root, "hypr", "themes", f"{applied_theme}.lua") if "hypr" in selected_keys else None
+                css_out = os.path.join(dest_root, "waybar", "generated", "theme-tokens.css") if "waybar" in selected_keys else None
+                rofi_out = os.path.join(dest_root, "rofi", "generated", "theme-tokens.rasi") if "rofi" in selected_keys else None
+                swaync_out = os.path.join(dest_root, "swaync", "generated", "theme-tokens.css") if "swaync" in selected_keys else None
+                hypr_conf_out = os.path.join(dest_root, "hypr", "generated", "theme-tokens.conf") if "hypr" in selected_keys else None
+                kitty_out = os.path.join(dest_root, "kitty", "generated", "theme-tokens.conf") if "kitty" in selected_keys else None
+                wlogout_out = os.path.join(dest_root, "wlogout", "generated", "theme-tokens.css") if "wlogout" in selected_keys else None
+
+                build_tokens.compile_theme_artifacts(
+                    theme_data,
+                    lua_out=lua_out,
+                    css_out=css_out,
+                    rofi_out=rofi_out,
+                    swaync_out=swaync_out,
+                    hypr_conf_out=hypr_conf_out,
+                    kitty_out=kitty_out,
+                    wlogout_out=wlogout_out,
+                )
+
+        if applied_profile:
+            profiles = load_profiles(repo_root)
+            if applied_profile in profiles:
+                prof_ns = argparse.Namespace(name=applied_profile, dest=dest_root, dry_run=False, json=False)
+                run_profile_apply(prof_ns, repo_root, dest_root, profiles)
+
+        if getattr(args, "interactive", False):
+            print(bold(cyan("\n╭──────────────────────────────────────────────────────────╮")))
+            print(bold(cyan("│                  Next Steps & Quick Start                │")))
+            print(bold(cyan("╰──────────────────────────────────────────────────────────╯\n")))
+            print(f"  1. Start your Wayland compositor session: {bold('Hyprland')}")
+            print(f"  2. Switch themes anytime:                 {bold('obsyx theme list')} / {bold('obsyx theme apply <name>')}")
+            print(f"  3. Switch hardware profiles anytime:      {bold('obsyx profile list')} / {bold('obsyx profile apply <name>')}")
+            print(f"  4. Search keybindings cheatsheet:         {bold('obsyx docgen')} (or press Super+F1 in session)")
+            print()
+
+    print()
     return 0
 
 
@@ -1529,6 +1774,7 @@ def main():
     ins_parser.add_argument("--dry-run", action="store_true", help="Simulate installation without touching the filesystem.")
     ins_parser.add_argument("--components", "-c", help="Comma-separated components to install (e.g. hypr,waybar,kitty).")
     ins_parser.add_argument("--skip", "-s", help="Comma-separated components to skip.")
+    ins_parser.add_argument("--interactive", "-i", action="store_true", help="Launch interactive guided installation wizard.")
     ins_parser.add_argument("--json", action="store_true", help="Output installation plan/result as JSON.")
 
     # Docgen

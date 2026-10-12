@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2026-10-12
 
 ### Overview
-First major feature release of Obsyx as a complete, modular Wayland desktop framework built with Hyprland and Lua. Ships with **Noctis Amethyst** as the reference theme.
+Initial feature release of Obsyx as a modular Wayland desktop configuration built with Hyprland and Lua. Ships with **Noctis Amethyst** as the reference theme.
 
 ### Added
 
@@ -32,7 +32,7 @@ First major feature release of Obsyx as a complete, modular Wayland desktop fram
 - **Hyprlock:** Screen locker with dynamic blurred wallpaper backgrounds, clock widgets, and password prompts.
 - **Kitty:** Terminal configuration importing Noctis Amethyst palette tokens.
 - **Wlogout:** Full-screen logout, reboot, and power action menu.
-- **Wallpaper Daemon:** Canonical wallpaper asset structure and `hyprpaper` autostart configuration.
+- **Wallpaper:** Canonical wallpaper assets, `swww-daemon` startup default, and a wallpaper setter with a Hyprpaper IPC fallback.
 - **Waybar Telemetry:** Portable telemetry scripts (`waybar/scripts/runner.sh`) for CPU, GPU, memory, network, media, and VPN with dynamic path resolution.
 
 #### 🛠 Obsyx CLI Suite (`bin/obsyx`)
