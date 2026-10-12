@@ -603,6 +603,52 @@ def generate_kitty_conf(tokens, output_path):
 
 
 # ---------------------------------------------------------------------------
+# Inheritance
+# ---------------------------------------------------------------------------
+
+def deep_merge(target, source):
+    """Deep merge source dict into target dict."""
+    for key, value in source.items():
+        if isinstance(value, dict) and key in target and isinstance(target[key], dict):
+            deep_merge(target[key], value)
+        else:
+            if key not in target:
+                target[key] = value
+    return target
+
+def resolve_inheritance(tokens, token_file_path, visited=None):
+    """Resolve theme inheritance if the 'extends' key is present."""
+    if visited is None:
+        visited = set()
+
+    real_path = os.path.realpath(token_file_path)
+    if real_path in visited:
+        raise TokenError(f"Circular inheritance detected: {real_path}")
+    visited.add(real_path)
+
+    if 'extends' not in tokens:
+        return tokens
+
+    parent_file = tokens['extends']
+    parent_path = os.path.join(os.path.dirname(token_file_path), parent_file)
+
+    try:
+        with open(parent_path, 'r') as f:
+            parent_tokens = json.load(f)
+    except FileNotFoundError:
+        raise TokenError(f"Parent theme not found: {parent_path}")
+    except json.JSONDecodeError as e:
+        raise TokenError(f"Malformed JSON in parent theme {parent_path}: {e}")
+
+    # Recursively resolve parent inheritance
+    parent_tokens = resolve_inheritance(parent_tokens, parent_path, visited)
+
+    # Merge parent into child (child overrides parent)
+    merged_tokens = deep_merge(tokens, parent_tokens)
+    return merged_tokens
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -666,6 +712,13 @@ def main():
         sys.exit(1)
     except json.JSONDecodeError as e:
         print(f'error: malformed JSON in {args.tokens}: {e}', file=sys.stderr)
+        sys.exit(1)
+
+    # Resolve Inheritance.
+    try:
+        tokens = resolve_inheritance(tokens, args.tokens)
+    except TokenError as e:
+        print(f'error: theme inheritance failed: {e}', file=sys.stderr)
         sys.exit(1)
 
     # Validate.

@@ -25,6 +25,8 @@ local Startup = {
 
     Registry.Startup.wallpaperDaemon,
 
+    Registry.Startup.idleDaemon,
+
     Registry.Startup.clipboardText,
 
     Registry.Startup.clipboardImage,

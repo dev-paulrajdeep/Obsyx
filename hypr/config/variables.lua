@@ -75,6 +75,7 @@ Registry.Startup = {
     notificationDaemon = "swaync",
     wallpaperDaemon    = "swww-daemon",
     wallpaper          = "~/.config/hypr/scripts/wallpaper.sh",
+    idleDaemon         = "hypridle",
     clipboardText      = "wl-paste --type text --watch cliphist store",
     clipboardImage     = "wl-paste --type image --watch cliphist store",
     networkApplet      = "nm-applet",

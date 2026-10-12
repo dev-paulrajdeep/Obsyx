@@ -65,6 +65,8 @@ class TestRofiThemeSyntax(unittest.TestCase):
             text=True,
             cwd=ROFI_DIR,
         )
+        if "Failed to open display" in res.stderr:
+            self.skipTest("rofi needs X11/Wayland display to run syntax validation")
         self.assertEqual(res.returncode, 0, f'rofi syntax error in {rel_path}:\n{res.stderr}')
 
     def test_theme_tokens_syntax(self):

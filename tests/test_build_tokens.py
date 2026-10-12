@@ -318,12 +318,17 @@ class TestRofiGeneration(_TempDirMixin, unittest.TestCase):
         """Verify the generated RASI file passes rofi syntax validation."""
         tokens = _load_valid_tokens()
         build_tokens.generate_rofi(tokens, self.rofi_out)
-        res = subprocess.run(
-            ['rofi', '-no-config', '-theme', self.rofi_out, '-dump-theme'],
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(res.returncode, 0, f'rofi failed:\n{res.stderr}')
+        try:
+            res = subprocess.run(
+                ['rofi', '-no-config', '-theme', self.rofi_out, '-dump-theme'],
+                capture_output=True,
+                text=True,
+            )
+            if "Failed to open display" in res.stderr:
+                self.skipTest("rofi needs X11/Wayland display to run syntax validation")
+            self.assertEqual(res.returncode, 0, f'rofi failed:\n{res.stderr}')
+        except FileNotFoundError:
+            self.skipTest("rofi not installed")
 
 
 # ---------------------------------------------------------------------------

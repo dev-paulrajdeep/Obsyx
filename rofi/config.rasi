@@ -4,7 +4,7 @@
  */
 
 configuration {
-    modi:                       "drun,run,filebrowser,window";
+    modi:                       "drun,run,filebrowser,window,calc,emoji";
     font:                       "JetBrainsMono Nerd Font 10";
     show-icons:                 true;
     icon-theme:                 "Papirus-Dark";
@@ -12,6 +12,8 @@ configuration {
     display-run:                "";
     display-filebrowser:        "";
     display-window:             "";
+    display-calc:               "";
+    display-emoji:              "󰞅";
     drun-display-format:        "{name}";
     window-format:              "{w} · {c} · {t}";
 }
