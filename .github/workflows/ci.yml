@@ -1,0 +1,98 @@
+name: Obsyx CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feat/**'
+      - 'fix/**'
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-validate:
+    name: Test & Validate (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install system dependencies (Lua 5.4, Luac, jq)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.4 jq
+          # Ensure lua and luac point to lua5.4
+          sudo ln -sf "$(which lua5.4)" /usr/local/bin/lua
+          sudo ln -sf "$(which luac5.4)" /usr/local/bin/luac
+
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install PyYAML
+
+      - name: Verify runtime environment
+        run: |
+          echo "=== Python ==="
+          python3 --version
+          echo "=== Lua ==="
+          lua -v
+          echo "=== Luac ==="
+          luac -v
+          echo "=== Bash ==="
+          bash --version
+
+      - name: Verify design token determinism
+        run: |
+          python3 tools/build_tokens.py --check
+          git diff --exit-code
+
+      - name: Run Obsyx CLI validator
+        run: |
+          ./bin/obsyx validate --verbose
+
+      - name: Run Obsyx diagnostic doctor
+        run: |
+          ./bin/obsyx doctor --json
+
+      - name: Run full unit test suite
+        run: |
+          python3 -m unittest discover tests/ -v
+
+      - name: Verify shell script syntax
+        run: |
+          bash -n waybar/scripts/*.sh hypr/scripts/*.sh rofi/scripts/*.sh tools/*.sh
+
+  hygiene-and-formatting:
+    name: Code Hygiene & Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify whitespace hygiene
+        run: |
+          git diff --check
+
+      - name: Verify executable permissions
+        run: |
+          test -x bin/obsyx || { echo "bin/obsyx must be executable"; exit 1; }
+          test -x tools/install.sh || { echo "tools/install.sh must be executable"; exit 1; }
+          test -x tools/build_tokens.py || { echo "tools/build_tokens.py must be executable"; exit 1; }

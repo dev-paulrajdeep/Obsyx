@@ -1,0 +1,66 @@
+--------------------------------------------------------------------------------
+-- Obsyx User Overrides Example
+--
+-- Copy this file to user/hyprland.lua (or ~/.config/obsyx/user/hyprland.lua).
+-- Any modifications made here take precedence and will not dirty git tracking.
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+-- 1. Application Overrides
+--------------------------------------------------------------------------------
+
+if Registry and Registry.Apps then
+    -- Example: switch default browser from vivaldi to firefox or zen
+    -- Registry.Apps.browser = "firefox"
+
+    -- Example: switch default terminal
+    -- Registry.Apps.terminal = "kitty"
+end
+
+--------------------------------------------------------------------------------
+-- 2. Custom Keybindings
+--------------------------------------------------------------------------------
+
+-- Example: Add custom keybindings using hl.bind
+-- hl.bind("SUPER_SHIFT", "F12", "exec, notify-send 'Obsyx' 'Hello from user config!'")
+-- hl.bind("SUPER", "Return", "exec, " .. (Registry.Apps.terminal or "kitty"))
+
+--------------------------------------------------------------------------------
+-- 3. Custom Plugin & Lifecycle Hooks
+--------------------------------------------------------------------------------
+
+local ok_plugins, Plugins = pcall(require, "core.plugins")
+if ok_plugins and Plugins then
+    Plugins.register("user_workflow_plugin", {
+        description = "User custom workflow enhancements",
+        version = "1.0.0",
+
+        -- Called after core configuration and desktop services initialize
+        on_init = function()
+            -- Add post-initialization hooks or notifications
+        end,
+
+        -- Called whenever the theme changes (e.g. Noctis Amethyst)
+        on_theme_change = function(theme, theme_name)
+            -- React to theme color or styling updates
+        end,
+
+        -- Called whenever the hardware profile changes (laptop vs workstation)
+        on_profile_change = function(profile_name)
+            -- React to hardware profile switches
+        end,
+
+        -- Called when the active workspace switches
+        on_workspace_change = function(workspace_id)
+            -- Custom per-workspace actions
+        end,
+    })
+end
+
+--------------------------------------------------------------------------------
+-- 4. Custom Window Rules
+--------------------------------------------------------------------------------
+
+-- Example: float a specific application or assign fixed workspace
+-- hl.set("windowrulev2", "float, class:^(pavucontrol)$")
+-- hl.set("windowrulev2", "workspace 4, class:^(discord)$")

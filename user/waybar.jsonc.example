@@ -1,0 +1,95 @@
+{
+    //──────────────────────────────────────────────
+    // Obsyx Waybar — User Overrides Example
+    //──────────────────────────────────────────────
+    //
+    // Copy this file to user/waybar.jsonc (or ~/.config/obsyx/user/waybar.jsonc).
+    // When present, Obsyx automatically instructs Waybar to load this configuration.
+
+    "layer": "top",
+    "position": "top",
+    "height": 38,
+    "spacing": 8,
+
+    "margin-top": 8,
+    "margin-left": 10,
+    "margin-right": 10,
+
+    "exclusive": true,
+    "passthrough": false,
+    "gtk-layer-shell": true,
+    "reload_style_on_change": true,
+
+    //──────────────────────────────────────────────
+    // Left Modules
+    //──────────────────────────────────────────────
+    "modules-left": [
+        "group/launcher",
+        "group/workspaces",
+        "hyprland/window"
+    ],
+
+    "group/launcher": {
+        "orientation": "horizontal",
+        "modules": ["custom/launcher"]
+    },
+
+    "group/workspaces": {
+        "orientation": "horizontal",
+        "modules": ["hyprland/workspaces"]
+    },
+
+    //──────────────────────────────────────────────
+    // Center Modules
+    //──────────────────────────────────────────────
+    "modules-center": [
+        "group/clock"
+    ],
+
+    "group/clock": {
+        "orientation": "horizontal",
+        "modules": ["clock"]
+    },
+
+    //──────────────────────────────────────────────
+    // Right Modules
+    //──────────────────────────────────────────────
+    "modules-right": [
+        "custom/media",
+        "group/system",
+        "custom/notifications",
+        "group/power"
+    ],
+
+    "group/system": {
+        "orientation": "horizontal",
+        "modules": [
+            "custom/cpu",
+            "custom/memory",
+            "pulseaudio",
+            "battery"
+        ]
+    },
+
+    "group/power": {
+        "orientation": "horizontal",
+        "modules": ["custom/power"]
+    },
+
+    //──────────────────────────────────────────────
+    // Include Standard Obsyx Modules
+    //──────────────────────────────────────────────
+    "include": [
+        "modules/launcher.jsonc",
+        "modules/workspaces.jsonc",
+        "modules/window.jsonc",
+        "modules/clock.jsonc",
+        "modules/media.jsonc",
+        "modules/cpu.jsonc",
+        "modules/memory.jsonc",
+        "modules/audio.jsonc",
+        "modules/battery.jsonc",
+        "modules/notifications.jsonc",
+        "modules/power.jsonc"
+    ]
+}

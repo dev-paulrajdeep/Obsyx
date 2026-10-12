@@ -1,0 +1,15 @@
+{
+  "name": "workstation",
+  "display_name": "Obsyx Workstation (High-Fidelity Desktop)",
+  "form_factor": "workstation",
+  "description": "High-fidelity configuration for multi-monitor workstations, featuring multi-pass glass blur, ambient drop shadows, VRR, 40px Waybar, and expanded system telemetry.",
+  "features": {
+    "blur_passes": 3,
+    "blur_size": 8,
+    "shadows_enabled": true,
+    "vfr": true,
+    "vrr": 1,
+    "waybar_height": 40,
+    "power_saving_telemetry": false
+  }
+}

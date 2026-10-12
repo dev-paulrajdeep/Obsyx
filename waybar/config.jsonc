@@ -80,6 +80,7 @@
             "custom/network",
             "custom/vpn",
             "pulseaudio",
+            "backlight",
             "bluetooth",
             "battery"
         ]
@@ -120,6 +121,7 @@
 
         "modules/tray.jsonc",
 
-        "modules/power.jsonc"
+        "modules/power.jsonc",
+        "modules/brightness.jsonc"
     ]
 }

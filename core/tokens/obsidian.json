@@ -1,0 +1,60 @@
+{
+    "name": "Obsidian",
+    "version": "0.1.0",
+    "palette": {
+        "void":             "#0b0b0e",
+        "surface":          { "hex": "#111114", "alpha": 0.90 },
+        "surface_raised":   { "hex": "#16161a", "alpha": 0.95 },
+        "surface_focus":    { "hex": "#1c1c21", "alpha": 0.98 },
+        "overlay":          { "hex": "#18181d", "alpha": 0.98 },
+
+        "ink_strong":       { "hex": "#ffffff", "alpha": 0.94 },
+        "ink_default":      { "hex": "#ffffff", "alpha": 0.80 },
+        "ink_muted":        { "hex": "#ffffff", "alpha": 0.60 },
+        "ink_quiet":        { "hex": "#ffffff", "alpha": 0.38 },
+
+        "hairline":         { "hex": "#ffffff", "alpha": 0.08 },
+        "hairline_strong":  { "hex": "#ffffff", "alpha": 0.14 },
+
+        "shadow":           { "hex": "#000000", "alpha": 0.42 },
+
+        "accent":           "#a0a5ad",
+        "accent_ink":       "#e2e4e8",
+        "accent_wash":      { "hex": "#a0a5ad", "alpha": 0.14 },
+        "accent_fill":      { "hex": "#a0a5ad", "alpha": 0.26 },
+        "accent_line":      { "hex": "#c8ccd4", "alpha": 0.42 },
+
+        "accent_gradient_start": { "hex": "#8f949c", "alpha": 0.92 },
+        "accent_gradient_end":   { "hex": "#c8ccd4", "alpha": 0.92 },
+
+        "warning":          "#c9a96e",
+        "danger":           "#c26e75",
+        "danger_wash":      { "hex": "#c26e75", "alpha": 0.14 },
+
+        "border_inactive":  { "hex": "#1e1e24", "alpha": 0.85 }
+    },
+    "geometry": {
+        "gaps_in": 4,
+        "gaps_out": 10,
+        "border_size": 2,
+        "rounding": 6,
+        "rounding_power": 2.2
+    },
+    "opacity": {
+        "active": 0.82,
+        "inactive": 0.70,
+        "fullscreen": 0.96
+    },
+    "blur": {
+        "size": 10,
+        "passes": 2,
+        "vibrancy": 0.12,
+        "contrast": 1.10,
+        "brightness": 0.98
+    },
+    "shadow": {
+        "range": 14,
+        "render_power": 3,
+        "color": { "hex": "#000000", "alpha": 0.60 }
+    }
+}

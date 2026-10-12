@@ -1,6 +1,6 @@
 {
     "custom/cpu": {
-        "exec": "~/.config/waybar/scripts/cpuinfo.sh",
+        "exec": "sh -c 'for d in \"$WAYBAR_SCRIPTS_DIR\" ./scripts ./waybar/scripts \"${XDG_CONFIG_HOME:-$HOME/.config}/waybar/scripts\"; do [ -n \"$d\" ] && [ -x \"$d/cpuinfo.sh\" ] && exec \"$d/cpuinfo.sh\" \"$@\"; done'",
         "return-type": "json",
 
         "interval": 2,

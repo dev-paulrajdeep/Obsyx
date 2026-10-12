@@ -1,0 +1,96 @@
+{
+    //──────────────────────────────────────────────
+    // Obsyx Waybar — Laptop Profile (Compact & Battery Efficient)
+    //──────────────────────────────────────────────
+
+    "layer": "top",
+    "position": "top",
+
+    "height": 32,
+    "spacing": 6,
+
+    "margin-top": 6,
+    "margin-left": 8,
+    "margin-right": 8,
+
+    "exclusive": true,
+    "passthrough": false,
+
+    "gtk-layer-shell": true,
+    "reload_style_on_change": true,
+
+    //──────────────────────────────────────────────
+    // Left — navigation and current context
+    //──────────────────────────────────────────────
+
+    "modules-left": [
+        "group/launcher",
+        "group/workspaces",
+        "hyprland/window"
+    ],
+
+    "group/launcher": {
+        "orientation": "horizontal",
+        "modules": ["custom/launcher"]
+    },
+
+    "group/workspaces": {
+        "orientation": "horizontal",
+        "modules": ["hyprland/workspaces"]
+    },
+
+    //──────────────────────────────────────────────
+    // Center — time anchor
+    //──────────────────────────────────────────────
+
+    "modules-center": [
+        "group/clock"
+    ],
+
+    "group/clock": {
+        "orientation": "horizontal",
+        "modules": ["clock"]
+    },
+
+    //──────────────────────────────────────────────
+    // Right — essential telemetry & power controls
+    //──────────────────────────────────────────────
+
+    "modules-right": [
+        "custom/media",
+        "group/system",
+        "custom/notifications",
+        "group/power"
+    ],
+
+    "group/system": {
+        "orientation": "horizontal",
+        "modules": [
+            "custom/cpu",
+            "custom/memory",
+            "pulseaudio",
+            "bluetooth",
+            "battery"
+        ]
+    },
+
+    "group/power": {
+        "orientation": "horizontal",
+        "modules": ["custom/power"]
+    },
+
+    "include": [
+        "modules/launcher.jsonc",
+        "modules/workspaces.jsonc",
+        "modules/window.jsonc",
+        "modules/clock.jsonc",
+        "modules/media.jsonc",
+        "modules/cpu.jsonc",
+        "modules/memory.jsonc",
+        "modules/audio.jsonc",
+        "modules/bluetooth.jsonc",
+        "modules/battery.jsonc",
+        "modules/notifications.jsonc",
+        "modules/power.jsonc"
+    ]
+}

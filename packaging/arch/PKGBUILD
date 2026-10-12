@@ -1,0 +1,68 @@
+# Maintainer: Obsyx Developers <https://github.com/dev-paulrajdeep/Obsyx>
+pkgname=obsyx-git
+_pkgname=obsyx
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Modular Wayland desktop framework built with Hyprland, Lua, and the Noctis Amethyst design token system"
+arch=('any')
+url="https://github.com/dev-paulrajdeep/Obsyx"
+license=('MIT')
+depends=(
+    'hyprland'
+    'lua'
+    'python'
+    'waybar'
+    'rofi'
+    'swaync'
+    'hyprlock'
+    'kitty'
+    'wlogout'
+    'hyprpaper'
+    'wl-clipboard'
+    'cliphist'
+    'playerctl'
+    'brightnessctl'
+)
+optdepends=(
+    'hyprshot: Screenshot management utility'
+    'hyprpicker: Screen color picker'
+    'swww: High-performance wallpaper daemon'
+    'nm-applet: NetworkManager tray indicator'
+    'blueman-applet: Bluetooth tray indicator'
+    'qalculate-gtk: Floating calculator modal'
+)
+makedepends=('git')
+provides=('obsyx')
+conflicts=('obsyx')
+source=("git+https://github.com/dev-paulrajdeep/Obsyx.git")
+sha256sums=('SKIP')
+
+pkgver() {
+    cd "$srcdir/$_pkgname"
+    git describe --long --tags 2>/dev/null | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' || echo "0.1.0"
+}
+
+package() {
+    cd "$srcdir/$_pkgname"
+
+    # Install desktop framework files into /usr/share/obsyx
+    install -d "$pkgdir/usr/share/obsyx"
+    cp -r assets bin core hypr kitty profiles rofi swaync tools user waybar wlogout "$pkgdir/usr/share/obsyx/"
+
+    # Ensure executable permissions on scripts and binaries
+    chmod +x "$pkgdir/usr/share/obsyx/bin/obsyx"
+    chmod +x "$pkgdir/usr/share/obsyx/tools/"*.sh
+    chmod +x "$pkgdir/usr/share/obsyx/tools/"*.py
+    find "$pkgdir/usr/share/obsyx" -type f -name "*.sh" -exec chmod +x {} +
+
+    # Install CLI symlink to /usr/bin/obsyx
+    install -d "$pkgdir/usr/bin"
+    ln -sf /usr/share/obsyx/bin/obsyx "$pkgdir/usr/bin/obsyx"
+
+    # Install License
+    install -Dm644 LICENSE.md "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+    # Install Documentation
+    install -d "$pkgdir/usr/share/doc/$pkgname"
+    install -m644 README.md KEYBINDINGS.md CHANGELOG.md "$pkgdir/usr/share/doc/$pkgname/"
+}

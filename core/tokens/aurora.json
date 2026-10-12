@@ -1,0 +1,60 @@
+{
+    "name": "Aurora",
+    "version": "0.1.0",
+    "palette": {
+        "void":             "#071315",
+        "surface":          { "hex": "#0b1a1c", "alpha": 0.87 },
+        "surface_raised":   { "hex": "#0f2225", "alpha": 0.93 },
+        "surface_focus":    { "hex": "#142b2f", "alpha": 0.97 },
+        "overlay":          { "hex": "#112529", "alpha": 0.98 },
+
+        "ink_strong":       { "hex": "#f0fdf4", "alpha": 0.94 },
+        "ink_default":      { "hex": "#e6f7f2", "alpha": 0.80 },
+        "ink_muted":        { "hex": "#a7d7cd", "alpha": 0.62 },
+        "ink_quiet":        { "hex": "#6fa397", "alpha": 0.44 },
+
+        "hairline":         { "hex": "#26a69a", "alpha": 0.14 },
+        "hairline_strong":  { "hex": "#26a69a", "alpha": 0.24 },
+
+        "shadow":           { "hex": "#020708", "alpha": 0.36 },
+
+        "accent":           "#26a69a",
+        "accent_ink":       "#80cbc4",
+        "accent_wash":      { "hex": "#26a69a", "alpha": 0.16 },
+        "accent_fill":      { "hex": "#26a69a", "alpha": 0.30 },
+        "accent_line":      { "hex": "#4db6ac", "alpha": 0.50 },
+
+        "accent_gradient_start": { "hex": "#00bfa5", "alpha": 0.93 },
+        "accent_gradient_end":   { "hex": "#64ffda", "alpha": 0.93 },
+
+        "warning":          "#ffd54f",
+        "danger":           "#ef5350",
+        "danger_wash":      { "hex": "#ef5350", "alpha": 0.16 },
+
+        "border_inactive":  { "hex": "#122b2d", "alpha": 0.82 }
+    },
+    "geometry": {
+        "gaps_in": 6,
+        "gaps_out": 14,
+        "border_size": 2,
+        "rounding": 9,
+        "rounding_power": 2.5
+    },
+    "opacity": {
+        "active": 0.73,
+        "inactive": 0.60,
+        "fullscreen": 0.94
+    },
+    "blur": {
+        "size": 15,
+        "passes": 3,
+        "vibrancy": 0.45,
+        "contrast": 1.20,
+        "brightness": 1.02
+    },
+    "shadow": {
+        "range": 20,
+        "render_power": 4,
+        "color": { "hex": "#020708", "alpha": 0.52 }
+    }
+}

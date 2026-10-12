@@ -1,0 +1,162 @@
+/**
+ * Obsyx - Noctis Amethyst Rofi Theme
+ * Token-driven styling matching Hyprland and Waybar.
+ */
+
+@import "generated/theme-tokens.rasi"
+
+* {
+    background-color:            transparent;
+    text-color:                  @ink-default;
+    font:                        "JetBrainsMono Nerd Font 10";
+}
+
+window {
+    transparency:                "real";
+    location:                    center;
+    anchor:                      center;
+    fullscreen:                  false;
+    width:                       640px;
+    x-offset:                    0px;
+    y-offset:                    0px;
+
+    enabled:                     true;
+    margin:                      0px;
+    padding:                     0px;
+    border:                      @border-width;
+    border-radius:               @rounding;
+    border-color:                @hairline-strong;
+    background-color:            @noctis-surface-raised;
+    cursor:                      "default";
+}
+
+mainbox {
+    enabled:                     true;
+    spacing:                     12px;
+    margin:                      0px;
+    padding:                     24px;
+    border:                      0px solid;
+    border-radius:               0px;
+    border-color:                @amethyst;
+    background-color:            transparent;
+    children:                    [ "inputbar", "listview" ];
+}
+
+inputbar {
+    enabled:                     true;
+    spacing:                     10px;
+    margin:                      0px;
+    padding:                     10px 14px;
+    border:                      1px solid;
+    border-radius:               @rounding;
+    border-color:                @hairline;
+    background-color:            @noctis-surface;
+    text-color:                  @ink-strong;
+    children:                    [ "prompt", "entry" ];
+}
+
+prompt {
+    enabled:                     true;
+    background-color:            transparent;
+    text-color:                  @amethyst;
+}
+
+entry {
+    enabled:                     true;
+    background-color:            transparent;
+    text-color:                  @ink-strong;
+    cursor:                      text;
+    placeholder:                 "Search...";
+    placeholder-color:           @ink-quiet;
+}
+
+listview {
+    enabled:                     true;
+    columns:                     1;
+    lines:                       8;
+    cycle:                       true;
+    dynamic:                     true;
+    scrollbar:                   false;
+    layout:                      vertical;
+    reverse:                     false;
+    fixed-height:                true;
+    fixed-columns:               true;
+    
+    spacing:                     6px;
+    margin:                      0px;
+    padding:                     0px;
+    border:                      0px solid;
+    border-radius:               0px;
+    border-color:                transparent;
+    background-color:            transparent;
+    text-color:                  @ink-default;
+    cursor:                      "default";
+}
+
+element {
+    enabled:                     true;
+    spacing:                     10px;
+    margin:                      0px;
+    padding:                     8px 12px;
+    border:                      1px solid;
+    border-radius:               @rounding;
+    border-color:                transparent;
+    background-color:            transparent;
+    text-color:                  @ink-default;
+    cursor:                      pointer;
+}
+
+element normal.normal {
+    background-color:            transparent;
+    text-color:                  @ink-default;
+}
+
+element selected.normal {
+    border-color:                @amethyst-line;
+    background-color:            @amethyst-fill;
+    text-color:                  @amethyst-ink;
+}
+
+element-icon {
+    background-color:            transparent;
+    text-color:                  inherit;
+    size:                        24px;
+    cursor:                      inherit;
+}
+
+element-text {
+    background-color:            transparent;
+    text-color:                  inherit;
+    highlight:                   inherit;
+    cursor:                      inherit;
+    vertical-align:              0.5;
+    horizontal-align:            0.0;
+}
+
+message {
+    enabled:                     true;
+    margin:                      0px;
+    padding:                     12px;
+    border:                      1px solid;
+    border-radius:               @rounding;
+    border-color:                @hairline;
+    background-color:            @noctis-surface;
+    text-color:                  @ink-default;
+}
+
+textbox {
+    background-color:            transparent;
+    text-color:                  inherit;
+    vertical-align:              0.5;
+    horizontal-align:            0.0;
+    highlight:                   none;
+}
+
+error-message {
+    padding:                     15px;
+    border:                      1px solid;
+    border-radius:               @rounding;
+    border-color:                @danger;
+    background-color:            @noctis-surface;
+    text-color:                  @danger;
+}

@@ -19,6 +19,7 @@ luac.out
 
 # Build
 build/
+dist/
 
 # Temporary
 tmp/
@@ -28,3 +29,13 @@ tmp/
 __pycache__/
 *.pyc
 *.pyo
+
+# Obsyx Profile Overrides
+hypr/config/profile.lua
+.obsyx_profile
+
+# Obsyx User Overrides (Git-Clean Local Customization)
+user/*
+!user/README.md
+!user/*.example
+!user/.gitkeep

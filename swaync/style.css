@@ -1,0 +1,188 @@
+/* Obsyx - Noctis Amethyst SwayNC Stylesheet
+ * Token-driven styling matching Hyprland, Waybar, and Rofi.
+ */
+
+@import "generated/theme-tokens.css";
+
+* {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 13px;
+}
+
+.control-center {
+    background: @noctis-surface-raised;
+    border: 2px solid @hairline-strong;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px @shadow;
+    color: @ink-default;
+    padding: 14px;
+}
+
+.control-center .widget-title {
+    color: @ink-strong;
+    font-size: 15px;
+    font-weight: bold;
+    margin: 8px 0;
+}
+
+.control-center .widget-title > button {
+    background: @noctis-surface;
+    border: 1px solid @hairline;
+    border-radius: 6px;
+    color: @ink-default;
+    padding: 4px 10px;
+}
+
+.control-center .widget-title > button:hover {
+    background: @amethyst-fill;
+    border-color: @amethyst-line;
+    color: @amethyst-ink;
+}
+
+.control-center .widget-dnd {
+    background: @noctis-surface;
+    border: 1px solid @hairline;
+    border-radius: 6px;
+    margin: 8px 0;
+    padding: 8px 12px;
+}
+
+.control-center .widget-dnd > switch {
+    background: @noctis-surface-focus;
+    border: 1px solid @hairline;
+    border-radius: 12px;
+}
+
+.control-center .widget-dnd > switch:checked {
+    background: @amethyst;
+    border-color: @amethyst-line;
+}
+
+.control-center .widget-dnd > switch > slider {
+    background: @ink-strong;
+    border-radius: 12px;
+}
+
+.control-center .widget-mpris {
+    background: @noctis-surface;
+    border: 1px solid @hairline;
+    border-radius: 8px;
+    color: @ink-default;
+    margin: 8px 0;
+    padding: 10px;
+}
+
+.control-center .widget-mpris .widget-mpris-player {
+    color: @amethyst-ink;
+    font-weight: bold;
+}
+
+.control-center .widget-mpris .widget-mpris-title {
+    color: @ink-strong;
+    font-weight: bold;
+}
+
+.control-center .widget-mpris .widget-mpris-subtitle {
+    color: @ink-muted;
+}
+
+/* Floating notification popups */
+.floating-notifications {
+    background: transparent;
+}
+
+.notification-row {
+    background: transparent;
+    outline: none;
+}
+
+.notification-row:focus,
+.notification-row:hover {
+    background: transparent;
+}
+
+.notification {
+    background: @noctis-surface-raised;
+    border: 2px solid @hairline-strong;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px @shadow;
+    color: @ink-default;
+    margin: 6px 0;
+    padding: 12px;
+}
+
+.notification.low {
+    border-color: @hairline;
+}
+
+.notification.normal {
+    border-color: @hairline-strong;
+}
+
+.notification.critical {
+    background: @danger-wash;
+    border-color: @danger;
+}
+
+.notification .summary {
+    color: @ink-strong;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.notification.critical .summary {
+    color: @danger;
+}
+
+.notification .body {
+    color: @ink-default;
+    font-size: 12px;
+}
+
+.notification .time {
+    color: @ink-quiet;
+    font-size: 11px;
+}
+
+.notification .close-button {
+    background: transparent;
+    border: none;
+    color: @ink-muted;
+    border-radius: 4px;
+    padding: 4px;
+}
+
+.notification .close-button:hover {
+    background: @danger-wash;
+    color: @danger;
+}
+
+.notification-action {
+    background: @noctis-surface;
+    border: 1px solid @hairline;
+    border-radius: 6px;
+    color: @ink-default;
+    margin: 4px;
+    padding: 6px 12px;
+}
+
+.notification-action:hover {
+    background: @amethyst-fill;
+    border-color: @amethyst-line;
+    color: @amethyst-ink;
+}
+
+.notification-default-action:hover {
+    background: @noctis-surface-focus;
+}
+
+/* Progress bar inside notifications */
+progressbar {
+    background: @noctis-surface;
+    border-radius: 4px;
+}
+
+progressbar progress {
+    background: @amethyst;
+    border-radius: 4px;
+}

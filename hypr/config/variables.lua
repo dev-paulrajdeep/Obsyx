@@ -30,10 +30,12 @@ Registry.Apps = {
 Registry.Desktop = {
 
     launcher       = "rofi -show drun",
+    clipboard      = "~/.config/rofi/scripts/cliphist.sh",
+    powerMenu      = "~/.config/rofi/scripts/powermenu.sh",
     lock           = "hyprlock",
     logout         = "wlogout",
     notification   = "swaync",
-    wallpaper      = "awww",
+    wallpaper      = "swww",
     statusBar      = "waybar",
 }
 
@@ -69,14 +71,16 @@ Registry.Services = {
 
 Registry.Startup = {
 
-    wallpaperDaemon    = "awww-daemon",
-    statusBar          = "waybar",
+    authAgent          = "~/.config/hypr/scripts/auth-agent.sh",
     notificationDaemon = "swaync",
-    wallpaper          = "awww img ~/Pictures/Wallpapers/default.png",
+    wallpaperDaemon    = "swww-daemon",
+    wallpaper          = "~/.config/hypr/scripts/wallpaper.sh",
+    idleDaemon         = "hypridle",
     clipboardText      = "wl-paste --type text --watch cliphist store",
     clipboardImage     = "wl-paste --type image --watch cliphist store",
     networkApplet      = "nm-applet",
     bluetoothApplet    = "blueman-applet",
+    statusBar          = "waybar",
 
 }
 
@@ -86,8 +90,10 @@ Registry.Startup = {
 
 Registry.Paths = {
 
-    wallpapers = "~/Pictures/Wallpapers",
-    defaultWallpaper = "~/Pictures/Wallpapers/default.png",
+    wallpapers                 = "~/Pictures/Wallpapers",
+    defaultWallpaper           = "~/Pictures/Wallpapers/default.png",
+    canonicalWallpapers        = "~/.config/hypr/assets/wallpapers",
+    canonicalDefaultWallpaper  = "~/.config/hypr/assets/wallpapers/noctis_amethyst_default.png",
 
 }
 
@@ -144,7 +150,7 @@ Registry.Session = {
 
     lock       = Registry.Desktop.lock,
     logout     = "hyprctl dispatch exit",
-    powerMenu  = Registry.Desktop.logout,
+    powerMenu  = Registry.Desktop.powerMenu,
     suspend    = "systemctl suspend",
     reboot     = "systemctl reboot",
     shutdown   = "systemctl poweroff",

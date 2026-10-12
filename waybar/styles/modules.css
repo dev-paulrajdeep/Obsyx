@@ -148,7 +148,8 @@
   padding: 0 6px;
 }
 
-#custom-notifications.notification {
+#custom-notifications.notification,
+#custom-notifications.dnd-notification {
   color: @amethyst-ink;
 }
 
